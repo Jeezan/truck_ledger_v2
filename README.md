@@ -1,6 +1,6 @@
 # truck_ledger_v2
 
-A new Flutter project.
+A Flutter Application to track the transactions with other farms
 
 ## Getting Started
 
