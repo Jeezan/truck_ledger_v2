@@ -79,4 +79,40 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   int get schemaVersion => 1;
+
+  //  >>>>>>>>>>>>>>> Products Database Logics <<<<<<<<<<<<<<<<<<
+
+  Future<int> addProduct({
+    required String productName,
+    required double unitPrice,
+    required String transactionType,
+  }) {
+    return into(product).insert(
+      ProductCompanion.insert(
+        productName: productName,
+        unitPrice: unitPrice,
+        transactionType: transactionType,
+      ),
+    );
+  }
+
+  Stream<List<ProductData>> watchAllProducts() {
+    return select(product).watch();
+  }
+
+  Stream<List<ProductData>> watchSaleProducts() {
+    return (select(
+      product,
+    )..where((p) => p.transactionType.equals('sale'))).watch();
+  }
+
+  Stream<List<ProductData>> watchPurchaseProducts() {
+    return (select(
+      product,
+    )..where((p) => p.transactionType.equals('purchase'))).watch();
+  }
+
+  //  >>>>>>>>>>>>>>> End Of Products Database Logics <<<<<<<<<<<<<<<<<<
 }
+
+final appDatabase = AppDatabase();

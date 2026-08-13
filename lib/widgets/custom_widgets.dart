@@ -24,12 +24,7 @@ class CustomWidgets {
   // App Bar
 
   PreferredSizeWidget customAppBar(String text) {
-    return AppBar(
-      title: Text(
-        text,
-        style: AppTextStyles.appBarFontStyle,
-      ),
-    );
+    return AppBar(title: Text(text, style: AppTextStyles.appBarFontStyle));
   }
 
   // Show Future features Dialog
@@ -54,6 +49,58 @@ class CustomWidgets {
       ),
     );
   }
+
+  // Custom Floating Action Button
+
+  Widget customFloatingActionButton({
+    required void Function()? onPressed,
+    required IconData icon,
+  }) {
+    return FloatingActionButton(
+      onPressed: onPressed,
+      elevation: 1,
+      shape: CircleBorder(),
+      child: Icon(icon),
+    );
+  }
+
+  // Widget to show when no products are available to show in the Product Master page
+
+  Widget emptyProductsDisplay({
+    required VoidCallback onPressed,
+    required String text,
+    required Icon icon,
+  }) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.inventory_2_outlined, size: 80, color: Colors.black26),
+        const SizedBox(height: 16),
+        const Text(
+          'No products available',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black38,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: icon,
+          label: Text(text, style: TextStyle(fontWeight: FontWeight.bold)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade200,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 
   // Custom Cart Card
 
