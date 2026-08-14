@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
+import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
 
@@ -106,14 +107,14 @@ class ProductMasterWidget {
                       ),
 
                       items: [
-                        const DropdownMenuItem(
-                          value: 'sale',
-                          child: Text('Give to Farms (Sales)'),
+                        DropdownMenuItem(
+                          value: TransactionType.sale.value,
+                          child: const Text('Give to Farms (Sales)'),
                         ),
 
-                        const DropdownMenuItem(
-                          value: 'purchase',
-                          child: Text('Get from Farms (Purchases)'),
+                        DropdownMenuItem(
+                          value: TransactionType.purchase.value,
+                          child: const Text('Get from Farms (Purchases)'),
                         ),
                       ],
                       onChanged: (value) {

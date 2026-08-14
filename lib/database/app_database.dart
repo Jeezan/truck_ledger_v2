@@ -158,6 +158,84 @@ class AppDatabase extends _$AppDatabase {
   }
 
   //  >>>>>>>>>>>>>>> End Of Customer Database Logics <<<<<<<<<<<<<<<<<<
+  //  >>>>>>>>>>>>>>> Inventory Database Logics <<<<<<<<<<<<<<<<<<
+
+  Future<int> addInventory({
+    required int productId,
+    required int quantity,
+    required String transactionType,
+  }) {
+    return into(inventory).insert(
+      InventoryCompanion.insert(
+        productId: Value(productId),
+        tranctionType: transactionType,
+        quantity: quantity,
+      ),
+    );
+  }
+
+  Future<int> addCustomInventory({
+    required String productName,
+    int? quantity,
+    required double unitPrice,
+    required String transactionType,
+  }) {
+    return into(inventory).insert(
+      InventoryCompanion.insert(
+        customName: Value(productName),
+        customPrice: Value(unitPrice),
+        quantity: quantity ?? 1,
+        tranctionType: transactionType,
+      ),
+    );
+  }
+
+  Stream<List<InventoryData>> watchAllInventory() {
+    return select(inventory).watch();
+  }
+
+  Stream<List<InventoryItemWithProduct>> watchInventoryWithProducts() {
+    final query = select(
+      inventory,
+    ).join([leftOuterJoin(product, product.id.equalsExp(inventory.productId))]);
+
+    return query.watch().map(
+      (rows) {
+        return rows.map(
+          (row) {
+            return InventoryItemWithProduct(
+              inventory: row.readTable(inventory),
+              product: row.readTableOrNull(product),
+            );
+          },
+        ).toList();
+      },
+    );
+  }
+
+  Stream<double> watchInventoryTotalValue() {
+    return watchInventoryWithProducts().map(
+      (items) {
+        double total = 0;
+        for (final item in items) {
+          final price =
+              item.inventory.customPrice ?? item.product?.unitPrice ?? 0;
+          total += (price * item.inventory.quantity);
+        }
+        return total;
+      },
+    );
+  }
+
+  //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
+}
+
+// Class for the Inventory and Product
+class InventoryItemWithProduct {
+  final InventoryData inventory;
+  final ProductData? product;
+
+  InventoryItemWithProduct({required this.inventory, this.product});
 }
 
 final appDatabase = AppDatabase();
