@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 
-class CutomerWidgets {
+class CustomerWidgets {
   void onFloatingButtonPressed({
     required BuildContext context,
     required String titleText,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
-import 'package:truck_ledger_v2/widgets/cutomer_widgets.dart';
+import 'package:truck_ledger_v2/widgets/customer_widgets.dart';
 
 class CustomerPage extends StatefulWidget {
   const CustomerPage({super.key});
@@ -43,7 +43,7 @@ class _CustomerPageState extends State<CustomerPage> {
   }
 
   void _floatingActionButtonPress() {
-    CutomerWidgets().onFloatingButtonPressed(
+    CustomerWidgets().onFloatingButtonPressed(
       context: context,
       titleText: 'Add New Customer',
       buttonText: 'Add Customer to List',

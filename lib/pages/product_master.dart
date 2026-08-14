@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
+import 'package:truck_ledger_v2/constants/app_enums.dart'; // <-- IMPORT YOUR ENUM HERE
 import 'package:truck_ledger_v2/database/app_database.dart';
 import 'package:truck_ledger_v2/pages/edit_product_page.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
@@ -15,7 +16,10 @@ class ProductMaster extends StatefulWidget {
 class _ProductMasterState extends State<ProductMaster> {
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
-  String _selectedAction = 'sale';
+
+  // 1. Initialized using the enum instead of the 'sale' magic string
+  String _selectedAction = TransactionType.sale.value;
+
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _formKeyEdit = GlobalKey<FormState>();
   final database = appDatabase;
@@ -30,36 +34,48 @@ class _ProductMasterState extends State<ProductMaster> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar(text: 'PRODUCT MASTER'),
+      appBar: CustomAppBar(text: 'PRODUCT MASTER'),
 
       floatingActionButton: CustomWidgets().customFloatingActionButton(
-        onPressed: () {
-          _floatingActionPress();
-        },
+        onPressed: _floatingActionPress,
         icon: Icons.add,
       ),
 
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
 
-        child: StreamBuilder(
+        // 2. We only watch the database ONCE now
+        child: StreamBuilder<List<ProductData>>(
           stream: database.watchAllProducts(),
           builder: (context, snapshot) {
-            final products = snapshot.data ?? [];
+            // Show a loading indicator while the stream connects
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-            if (products.isEmpty) {
+            final allProducts = snapshot.data ?? [];
+
+            if (allProducts.isEmpty) {
               return CustomWidgets().emptyProductsDisplay(
-                onPressed: () {
-                  _floatingActionPress();
-                },
+                onPressed: _floatingActionPress,
                 text: 'Add Product',
-                icon: Icon(Icons.add),
+                icon: const Icon(Icons.add),
               );
             }
 
-            return ListView(
-              padding: EdgeInsets.all(16),
+            // 3. Filter the lists in memory using the enum!
+            final salesProducts = allProducts
+                .where((p) => p.transactionType == TransactionType.sale.value)
+                .toList();
 
+            final purchaseProducts = allProducts
+                .where(
+                  (p) => p.transactionType == TransactionType.purchase.value,
+                )
+                .toList();
+
+            return ListView(
+              padding: const EdgeInsets.all(16),
               children: [
                 const Text(
                   'Give to Farms (Sales)',
@@ -70,35 +86,26 @@ class _ProductMasterState extends State<ProductMaster> {
                   ),
                 ),
 
-                StreamBuilder<List<ProductData>>(
-                  stream: database.watchSaleProducts(),
-                  builder: (context, snapshot) {
-                    final products = snapshot.data ?? [];
-
-                    if (products.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Center(
-                          child: Text(
-                            'No Products Added. Press + to add',
-                            style: TextStyle(color: Colors.black45),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-
-                        return _productCard(context, product);
-                      },
-                    );
-                  },
-                ),
+                // Render Sales
+                if (salesProducts.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 16.0),
+                    child: Center(
+                      child: Text(
+                        'No Products Added. Press + to add',
+                        style: TextStyle(color: Colors.black45),
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: salesProducts.length,
+                    itemBuilder: (context, index) {
+                      return _productCard(context, salesProducts[index]);
+                    },
+                  ),
 
                 const SizedBox(height: 20),
 
@@ -111,35 +118,26 @@ class _ProductMasterState extends State<ProductMaster> {
                   ),
                 ),
 
-                StreamBuilder<List<ProductData>>(
-                  stream: database.watchPurchaseProducts(),
-                  builder: (context, snapshot) {
-                    final products = snapshot.data ?? [];
-
-                    if (products.isEmpty) {
-                      return const Padding(
-                        padding: EdgeInsets.only(top: 8.0),
-                        child: Center(
-                          child: Text(
-                            'No Products Added. Press + to add',
-                            style: TextStyle(color: Colors.black45),
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: products.length,
-                      itemBuilder: (context, index) {
-                        final product = products[index];
-
-                        return _productCard(context, product);
-                      },
-                    );
-                  },
-                ),
+                // Render Purchases
+                if (purchaseProducts.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 8.0),
+                    child: Center(
+                      child: Text(
+                        'No Products Added. Press + to add',
+                        style: TextStyle(color: Colors.black45),
+                      ),
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: purchaseProducts.length,
+                    itemBuilder: (context, index) {
+                      return _productCard(context, purchaseProducts[index]);
+                    },
+                  ),
               ],
             );
           },
@@ -153,13 +151,11 @@ class _ProductMasterState extends State<ProductMaster> {
       context: context,
       titleText: 'Add Product',
       buttonText: 'Add Product',
-
       productNameController: _productNameController,
       productPriceController: _productPriceController,
       selectedAction: _selectedAction,
       formKey: _formKey,
       onActionChanged: (String value) => _selectedAction = value,
-
       onPressed: () async {
         if (_formKey.currentState!.validate()) {
           await database.addProduct(
@@ -168,7 +164,11 @@ class _ProductMasterState extends State<ProductMaster> {
             transactionType: _selectedAction,
           );
 
+          // 4. Check if widget is mounted before using context after an async gap
+          if (!mounted) return;
+
           Navigator.pop(context);
+
           CustomWidgets().customSnackBar(
             context,
             '\'${_productNameController.text}\' added to \'$_selectedAction\' category',
@@ -177,6 +177,11 @@ class _ProductMasterState extends State<ProductMaster> {
 
           _productNameController.clear();
           _productPriceController.clear();
+
+          // Reset action to default Enum value for the next time the modal opens
+          setState(() {
+            _selectedAction = TransactionType.sale.value;
+          });
         }
       },
     );
