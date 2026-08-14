@@ -121,6 +121,25 @@ class AppDatabase extends _$AppDatabase {
   }
 
   //  >>>>>>>>>>>>>>> End Of Products Database Logics <<<<<<<<<<<<<<<<<<
+  //  >>>>>>>>>>>>>>> Customer Database Logics <<<<<<<<<<<<<<<<<<
+
+  Future<int> addCustomer({
+    required String customerName,
+    required String customerPhoneNumber,
+    String? customerAddress,
+    double? currentBalance,
+  }) {
+    return into(customer).insert(
+      CustomerCompanion.insert(
+        customerName: customerName,
+        customerPhoneNumber: customerPhoneNumber,
+        customerAddress: Value(customerAddress),
+        // currentBalance: Value(currentBalance ?? 0.0),
+      ),
+    );
+  }
+
+  //  >>>>>>>>>>>>>>> End Of Customer Database Logics <<<<<<<<<<<<<<<<<<
 }
 
 final appDatabase = AppDatabase();
