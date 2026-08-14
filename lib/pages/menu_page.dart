@@ -10,7 +10,7 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar('MENU'),
+      appBar: CustomWidgets().customAppBar(text: 'MENU'),
 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -51,11 +51,7 @@ class MenuPage extends StatelessWidget {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 50,
-                    endIndent: 50,
-                  ),
+                  const Divider(height: 1, indent: 50, endIndent: 50),
 
                   ListTile(
                     leading: const Icon(
@@ -116,11 +112,7 @@ class MenuPage extends StatelessWidget {
                     },
                   ),
 
-                  const Divider(
-                    height: 1,
-                    indent: 50,
-                    endIndent: 50,
-                  ),
+                  const Divider(height: 1, indent: 50, endIndent: 50),
 
                   ListTile(
                     leading: const Icon(
@@ -138,11 +130,7 @@ class MenuPage extends StatelessWidget {
                       );
                     },
                   ),
-                  const Divider(
-                    height: 1,
-                    indent: 50,
-                    endIndent: 50,
-                  ),
+                  const Divider(height: 1, indent: 50, endIndent: 50),
 
                   ListTile(
                     leading: const Icon(
@@ -172,10 +160,7 @@ class MenuPage extends StatelessWidget {
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
 
-              child: Text(
-                'System',
-                style: AppTextStyles.menuHeadingFontStyle,
-              ),
+              child: Text('System', style: AppTextStyles.menuHeadingFontStyle),
             ),
             const Card(
               elevation: 1,

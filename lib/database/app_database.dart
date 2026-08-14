@@ -96,6 +96,14 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<int> deleteProduct(int id) {
+    return (delete(product)..where((p) => p.id.equals(id))).go();
+  }
+
+  Future<bool> updateProduct(ProductData item) {
+    return update(product).replace(item);
+  }
+
   Stream<List<ProductData>> watchAllProducts() {
     return select(product).watch();
   }

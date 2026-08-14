@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/pages/edit_product_page.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 import 'package:truck_ledger_v2/widgets/product_master_widgets.dart';
 
@@ -16,6 +17,7 @@ class _ProductMasterState extends State<ProductMaster> {
   final TextEditingController _productPriceController = TextEditingController();
   String _selectedAction = 'sale';
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> _formKeyEdit = GlobalKey<FormState>();
   final database = appDatabase;
 
   @override
@@ -28,7 +30,7 @@ class _ProductMasterState extends State<ProductMaster> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar('PRODUCT MASTER'),
+      appBar: CustomWidgets().customAppBar(text: 'PRODUCT MASTER'),
 
       floatingActionButton: CustomWidgets().customFloatingActionButton(
         onPressed: () {
@@ -92,11 +94,7 @@ class _ProductMasterState extends State<ProductMaster> {
                       itemBuilder: (context, index) {
                         final product = products[index];
 
-                        return ProductMasterWidget().productCard(
-                          context: context,
-                          product: product,
-                          onTap: () {},
-                        );
+                        return _productCard(context, product);
                       },
                     );
                   },
@@ -137,11 +135,7 @@ class _ProductMasterState extends State<ProductMaster> {
                       itemBuilder: (context, index) {
                         final product = products[index];
 
-                        return ProductMasterWidget().productCard(
-                          context: context,
-                          product: product,
-                          onTap: () {},
-                        );
+                        return _productCard(context, product);
                       },
                     );
                   },
@@ -184,6 +178,28 @@ class _ProductMasterState extends State<ProductMaster> {
           _productNameController.clear();
           _productPriceController.clear();
         }
+      },
+    );
+  }
+
+  Widget _productCard(BuildContext context, ProductData product) {
+    return ProductMasterWidget().productCard(
+      context: context,
+      product: product,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => EditProductPage(
+              formKey: _formKeyEdit,
+              product: product,
+              onDelete: () async {
+                await database.deleteProduct(product.id);
+              },
+              onUpdate: (updatedProduct) async =>
+                  await database.updateProduct(updatedProduct),
+            ),
+          ),
+        );
       },
     );
   }

@@ -23,8 +23,14 @@ class CustomWidgets {
 
   // App Bar
 
-  PreferredSizeWidget customAppBar(String text) {
-    return AppBar(title: Text(text, style: AppTextStyles.appBarFontStyle));
+  PreferredSizeWidget customAppBar({
+    required String text,
+    List<Widget>? actions,
+  }) {
+    return AppBar(
+      title: Text(text, style: AppTextStyles.appBarFontStyle),
+      actions: actions,
+    );
   }
 
   // Show Future features Dialog
