@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
-import 'package:truck_ledger_v2/pages/product_master.dart';
+import 'package:truck_ledger_v2/pages/products/product_master.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class MenuPage extends StatelessWidget {
@@ -10,7 +10,7 @@ class MenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar(text: 'MENU'),
+      appBar: const CustomAppBar(text: 'MENU'),
 
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
-import 'package:truck_ledger_v2/constants/app_enums.dart'; // <-- IMPORT YOUR ENUM HERE
+import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
-import 'package:truck_ledger_v2/pages/edit_product_page.dart';
+import 'package:truck_ledger_v2/pages/products/edit_product_page.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 import 'package:truck_ledger_v2/widgets/product_master_widgets.dart';
 
@@ -34,7 +34,7 @@ class _ProductMasterState extends State<ProductMaster> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomAppBar(text: 'PRODUCT MASTER'),
+      appBar: const CustomAppBar(text: 'PRODUCT MASTER'),
 
       floatingActionButton: CustomWidgets().customFloatingActionButton(
         onPressed: _floatingActionPress,

@@ -49,14 +49,14 @@ class _EditProductPageState extends State<EditProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar(
+      appBar: CustomAppBar(
         text: widget.product.productName,
         actions: [
           IconButton(
             onPressed: () {
               _onDeleteIconPress(context);
             },
-            icon: Icon(
+            icon: const Icon(
               Icons.delete_forever_sharp,
               color: AppColors.secondaryColor,
             ),
@@ -65,7 +65,7 @@ class _EditProductPageState extends State<EditProductPage> {
       ),
 
       body: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         child: Form(
           key: widget.formKey,
           child: Column(

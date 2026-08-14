@@ -40,7 +40,7 @@ class ProductMasterWidget {
                   children: [
                     Text(
                       titleText,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
                       ),

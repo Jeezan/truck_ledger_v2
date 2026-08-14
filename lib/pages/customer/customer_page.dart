@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/pages/customer/customer_details_page.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 import 'package:truck_ledger_v2/widgets/customer_widgets.dart';
 
@@ -31,13 +32,52 @@ class _CustomerPageState extends State<CustomerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: CustomWidgets().customAppBar(text: 'CUSTOMER'),
+      appBar: const CustomAppBar(text: 'CUSTOMER'),
 
       floatingActionButton: CustomWidgets().customFloatingActionButton(
         onPressed: () {
           _floatingActionButtonPress();
         },
         icon: Icons.person_add_alt_1_sharp,
+      ),
+
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: StreamBuilder(
+          stream: database.watchAllCustomers(),
+          builder: (context, snapshot) {
+            final customers = snapshot.data ?? [];
+
+            if (customers.isEmpty) {
+              return CustomerWidgets().emptyCustomersDisplay(
+                onPressed: _floatingActionButtonPress,
+              );
+            }
+
+            return ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: customers.length,
+
+              itemBuilder: (context, index) {
+                final customer = customers[index];
+
+                return CustomerWidgets().customCustomerCard(
+                  customer: customer,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => CustomerDetailsPage(
+                          customer: customer,
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }

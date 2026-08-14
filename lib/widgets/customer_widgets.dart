@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
+import 'package:truck_ledger_v2/constants/app_text_styles.dart';
+import 'package:truck_ledger_v2/database/app_database.dart';
 
 class CustomerWidgets {
   void onFloatingButtonPressed({
@@ -135,6 +137,103 @@ class CustomerWidgets {
           },
         );
       },
+    );
+  }
+
+  // Empty Customer List
+  Widget emptyCustomersDisplay({required VoidCallback onPressed}) => Center(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.person_sharp, size: 80, color: Colors.black26),
+        const SizedBox(height: 16),
+        const Text(
+          'No Customers added',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black38,
+          ),
+        ),
+        const SizedBox(height: 12),
+        ElevatedButton.icon(
+          onPressed: onPressed,
+          icon: const Icon(Icons.add),
+          label: const Text(
+            'Add Customers',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.green.shade200,
+            foregroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  // Customer Card
+
+  Widget customCustomerCard({
+    required CustomerData customer,
+    required VoidCallback onTap,
+  }) {
+    final double balance = customer.currentBalance;
+    Color balanceColor = balance < 0
+        ? Colors.red
+        : (balance > 0 ? Colors.green : Colors.grey);
+    String balanceStatus = balance < 0
+        ? 'They owe you'
+        : (balance > 0 ? 'You owe them' : 'Settled');
+    return Card(
+      elevation: 2,
+      margin: const EdgeInsets.symmetric(vertical: 5),
+
+      child: ListTile(
+        onTap: onTap,
+
+        leading: CircleAvatar(
+          backgroundColor: AppColors.customerAvatarColor,
+
+          child: Text(
+            customer.customerName[0].toUpperCase(),
+            style: TextStyle(color: AppColors.customerAvatarTextColor),
+          ),
+        ),
+
+        title: Text(
+          customer.customerName,
+          style: AppTextStyles.customerCardTitleStyle,
+        ),
+
+        subtitle: Text(
+          customer.customerPhoneNumber,
+          style: AppTextStyles.customerCardSubtitleStyle,
+        ),
+
+        trailing: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              '${customer.currentBalance}',
+              style: AppTextStyles.customerBalanceMainStyle.copyWith(
+                color: balanceColor,
+              ),
+            ),
+            Text(
+              balanceStatus,
+              style: AppTextStyles.customerBalanceSubStyle.copyWith(
+                color: balanceColor,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/pages/counter_page.dart';
-import 'package:truck_ledger_v2/pages/customer_page.dart';
+import 'package:truck_ledger_v2/pages/customer/customer_page.dart';
 import 'package:truck_ledger_v2/pages/inventory_page.dart';
 import 'package:truck_ledger_v2/pages/menu_page.dart';
 
@@ -51,10 +51,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
+      body: IndexedStack(index: _selectedIndex, children: _pages),
     );
   }
 }

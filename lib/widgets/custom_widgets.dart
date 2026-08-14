@@ -1,6 +1,26 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 
+// App Bar
+
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  final String text;
+  final List<Widget>? actions;
+
+  const CustomAppBar({super.key, required this.text, this.actions});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      title: Text(text, style: AppTextStyles.appBarFontStyle),
+      actions: actions,
+    );
+  }
+
+  @override
+  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+}
+
 class CustomWidgets {
   void customSnackBar(
     BuildContext context,
@@ -18,18 +38,6 @@ class CustomWidgets {
         showCloseIcon: true,
         backgroundColor: backgroundColor,
       ),
-    );
-  }
-
-  // App Bar
-
-  PreferredSizeWidget customAppBar({
-    required String text,
-    List<Widget>? actions,
-  }) {
-    return AppBar(
-      title: Text(text, style: AppTextStyles.appBarFontStyle),
-      actions: actions,
     );
   }
 
@@ -65,7 +73,7 @@ class CustomWidgets {
     return FloatingActionButton(
       onPressed: onPressed,
       elevation: 1,
-      shape: CircleBorder(),
+      shape: const CircleBorder(),
       child: Icon(icon),
     );
   }
@@ -94,7 +102,10 @@ class CustomWidgets {
         ElevatedButton.icon(
           onPressed: onPressed,
           icon: icon,
-          label: Text(text, style: TextStyle(fontWeight: FontWeight.bold)),
+          label: Text(
+            text,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.green.shade200,
             foregroundColor: Colors.black,
@@ -108,6 +119,35 @@ class CustomWidgets {
     ),
   );
 
+  // Delete Dialog Box
+
+  void onDeleteIconPress({
+    required BuildContext context,
+    required String title,
+    required String content,
+    required VoidCallback onPressed,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Text(
+          content,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: onPressed,
+
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
   // Custom Cart Card
 
   // void customCartCard( bool isPositive, ) {

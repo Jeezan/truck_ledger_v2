@@ -139,6 +139,24 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Stream<List<CustomerData>> watchAllCustomers() {
+    return select(customer).watch();
+  }
+
+  Stream<CustomerData?> watchCustomer(int id) {
+    return (select(
+      customer,
+    )..where((c) => c.id.equals(id))).watchSingleOrNull();
+  }
+
+  Future<bool> updateCustomerInfo(CustomerData updatedCustomer) {
+    return update(customer).replace(updatedCustomer);
+  }
+
+  Future<int> deleteCustomer(int id) {
+    return (delete(customer)..where((c) => c.id.equals(id))).go();
+  }
+
   //  >>>>>>>>>>>>>>> End Of Customer Database Logics <<<<<<<<<<<<<<<<<<
 }
 
