@@ -70,7 +70,7 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
 
                   CustomWidgets().customSnackBar(
                     context,
-                    'Customer \'${widget.customerData.customerName}\' removed fomr List',
+                    'Customer \'${widget.customerData.customerName}\' removed from List',
                     AppColors.secondaryColor,
                   );
                 },

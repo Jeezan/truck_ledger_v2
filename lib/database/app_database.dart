@@ -227,6 +227,23 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<bool> updateInventoryQuantity({
+    required int id,
+    required int newQuantity,
+  }) {
+    return (update(inventory)..where((i) => i.id.equals(id)))
+        .write(InventoryCompanion(quantity: Value(newQuantity)))
+        .then((value) => value > 0);
+  }
+
+  //  Future<int> deleteCustomer(int id) {
+  //     return (delete(customer)..where((c) => c.id.equals(id))).go();
+  //   }
+
+  Future<int> deleteInventory(int id) {
+    return (delete(inventory)..where((i) => i.id.equals(id))).go();
+  }
+
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
 }
 

@@ -69,7 +69,6 @@ class _InventoryPageState extends State<InventoryPage> {
                     final item = items[index];
                     final isCustom = item.inventory.productId == null;
 
-                    // Extract values based on whether it's custom or database item
                     final name = isCustom
                         ? (item.inventory.customName ?? 'Unknown')
                         : (item.product?.productName ?? 'Unknown');
@@ -79,12 +78,19 @@ class _InventoryPageState extends State<InventoryPage> {
                     final qty = item.inventory.quantity;
 
                     return InventoryWidgets().customInventoryCard(
+                      context: context,
+                      inventoryId: item.inventory.id,
                       name: name,
                       price: price,
                       qty: qty,
+                      key: ValueKey(item.inventory.id),
+
                       onEdit: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Edit $name coming soon!')),
+                        InventoryWidgets().showManageStockDialog(
+                          context: context,
+                          inventoryId: item.inventory.id,
+                          name: name,
+                          currentQty: item.inventory.quantity,
                         );
                       },
                     );

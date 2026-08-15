@@ -20,4 +20,7 @@ class AppColors {
 
   static Color counterScaffoldBackgroundColor = Colors.grey.shade100;
   static Color counterAppbarBackgroundColor = Colors.teal.shade800;
+
+  static Color dismissibleWidgetColor = Colors.red.shade400;
+  static Color dismissibleWidgetIconColor = Colors.white;
 }

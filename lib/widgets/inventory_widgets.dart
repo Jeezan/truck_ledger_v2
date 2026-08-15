@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
@@ -264,6 +265,9 @@ class InventoryWidgets {
   }
 
   Widget customInventoryCard({
+    required BuildContext context,
+    required Key key,
+    required int inventoryId,
     required String name,
     required double price,
     required int qty,
@@ -271,27 +275,96 @@ class InventoryWidgets {
   }) {
     final totalValue = price * qty;
 
-    return Card(
-      elevation: 2,
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      child: ListTile(
-        title: Text(
-          name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+    return Dismissible(
+      key: key,
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) async {
+        return await showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Delete Inventory Item'),
+
+              content: Text('Are you sure you want to remove \'$name\'?'),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, false);
+                  },
+                  child: const Text('Cancel'),
+                ),
+
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context, true);
+                  },
+                  child: const Text(
+                    'Delete',
+                    style: TextStyle(color: AppColors.secondaryColor),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+      onDismissed: (direction) async {
+        await database.deleteInventory(inventoryId);
+
+        if (context.mounted) {
+          CustomWidgets().customSnackBar(
+            context,
+            'Customer \'$name\' removed from List',
+            AppColors.secondaryColor,
+          );
+        }
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        decoration: BoxDecoration(
+          color: AppColors.dismissibleWidgetColor,
+          borderRadius: BorderRadius.circular(12),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('Price: LKR ${price.toStringAsFixed(2)} | Qty: $qty'),
-            Text(
-              'Total: LKR ${totalValue.toStringAsFixed(2)}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            Text('Delete Inventory'),
+
+            SizedBox(width: 10),
+            const Icon(
+              Icons.delete_forever_sharp,
+              color: Colors.white,
+              size: 28,
             ),
           ],
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.edit_outlined, color: Colors.green),
-          onPressed: onEdit,
+      ),
+      child: Card(
+        elevation: 2,
+        margin: const EdgeInsets.symmetric(vertical: 6),
+        child: ListTile(
+          title: Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Price: LKR ${price.toStringAsFixed(2)} | Qty: $qty'),
+              Text(
+                'Total: LKR ${totalValue.toStringAsFixed(2)}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          trailing: IconButton(
+            icon: const Icon(Icons.edit_outlined, color: Colors.green),
+            onPressed: onEdit,
+          ),
         ),
       ),
     );
@@ -381,6 +454,182 @@ class InventoryWidgets {
               ),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void showManageStockDialog({
+    required BuildContext context,
+    required int inventoryId,
+    required String name,
+    required int currentQty,
+  }) async {
+    final TextEditingController qtyController = TextEditingController();
+    final GlobalKey<FormState> dialogFormKey = GlobalKey<FormState>();
+
+    String addValue = 'add';
+    String subtractValue = 'subtract';
+    String setValue = 'Set';
+
+    String mode = addValue;
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Manage Stock: $name'),
+
+              content: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Current Stock: $currentQty',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+
+                  const SizedBox(height: 15),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Add (+)'),
+
+                        selected: mode == addValue,
+                        onSelected: (value) {
+                          setState(
+                            () {
+                              mode = addValue;
+                            },
+                          );
+                        },
+                      ),
+
+                      ChoiceChip(
+                        label: const Text('Sub (-)'),
+
+                        selected: mode == subtractValue,
+                        onSelected: (value) {
+                          setState(
+                            () {
+                              mode = subtractValue;
+                            },
+                          );
+                        },
+                      ),
+                      ChoiceChip(
+                        label: const Text('Set (=)'),
+
+                        selected: mode == setValue,
+                        onSelected: (value) {
+                          setState(
+                            () {
+                              mode = setValue;
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 15),
+
+                  Form(
+                    key: dialogFormKey,
+                    child: TextFormField(
+                      controller: qtyController,
+                      keyboardType: TextInputType.number,
+
+                      decoration: InputDecoration(
+                        labelText: mode == addValue
+                            ? 'Enter quantity to Add'
+                            : mode == subtractValue
+                            ? 'Enter quantity to Subtract'
+                            : 'Enter the Stock Value',
+
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter a quantity';
+                        }
+                        final parsed = int.tryParse(value.trim());
+                        if (parsed == null || parsed < 0) {
+                          return 'Enter a valid positive number';
+                        }
+                        if (mode == subtractValue && parsed > currentQty) {
+                          return 'Cannot subtract more than current stock ($currentQty)';
+                        }
+                        return null;
+                      },
+                    ),
+                  ),
+                ],
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+
+                TextButton(
+                  onPressed: () async {
+                    if (dialogFormKey.currentState!.validate()) {
+                      final int? val = int.tryParse(qtyController.text);
+
+                      final snackBarData = currentQty;
+                      int newQty = currentQty;
+
+                      if (mode == addValue) {
+                        newQty += val!;
+                      } else if (mode == subtractValue) {
+                        newQty -= val!;
+                      } else {
+                        newQty = val!;
+                      }
+
+                      await database.updateInventoryQuantity(
+                        id: inventoryId,
+                        newQuantity: newQty,
+                      );
+                      if (context.mounted) {
+                        CustomWidgets().customSnackBar(
+                          context,
+                          'Inventory Value of \'$name\' updated from $snackBarData >> $newQty',
+                          Colors.deepPurple,
+                        );
+
+                        Navigator.pop(context);
+                      }
+                    }
+                  },
+                  child: Text(
+                    mode == addValue
+                        ? 'Add (+)'
+                        : mode == subtractValue
+                        ? 'Sub (-)'
+                        : 'Set (=)',
+                    style: TextStyle(
+                      color: mode != subtractValue
+                          ? AppColors.primaryColor
+                          : AppColors.secondaryColor,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
