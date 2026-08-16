@@ -42,27 +42,26 @@ class _InventoryPageState extends State<InventoryPage> {
         onPressed: _openAddInventorySheet,
         child: const Icon(Icons.add),
       ),
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          InventoryWidgets().totalInventoryValueCard(),
+      body: StreamBuilder<List<InventoryItemWithProduct>>(
+        stream: database.watchInventoryWithProducts(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          final items = snapshot.data ?? [];
 
-          Expanded(
-            child: StreamBuilder<List<InventoryItemWithProduct>>(
-              stream: database.watchInventoryWithProducts(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                final items = snapshot.data ?? [];
+          if (items.isEmpty) {
+            return InventoryWidgets().emptyInventoryDisplay(
+              onAddPressed: _openAddInventorySheet,
+            );
+          }
 
-                if (items.isEmpty) {
-                  return InventoryWidgets().emptyInventoryDisplay(
-                    onAddPressed: _openAddInventorySheet,
-                  );
-                }
-
-                return ListView.builder(
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              InventoryWidgets().totalInventoryValueCard(),
+              Expanded(
+                child: ListView.builder(
                   padding: const EdgeInsets.all(12),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
@@ -95,11 +94,11 @@ class _InventoryPageState extends State<InventoryPage> {
                       },
                     );
                   },
-                );
-              },
-            ),
-          ),
-        ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -116,12 +115,32 @@ class _InventoryPageState extends State<InventoryPage> {
     );
   }
 
-  Future<void> _saveInventory(
+  Future<bool> _saveInventory(
     bool isCustom,
     int? selectedProduct,
     String customTxType,
   ) async {
     if (isCustom) {
+      final customName = _customItemNameController.text.trim();
+      final qtyToAdd = int.tryParse(_customItemQuantityController.text)!;
+      final price = double.tryParse(_customItemPriceController.text)!;
+
+      final existing = await database.findInventoryByCustomName(customName);
+
+      if (existing != null) {
+        if (mounted) Navigator.pop(context);
+        if (mounted) {
+          InventoryWidgets().showDuplicateDialog(
+            context: context,
+            inventoryId: existing.id,
+            productName: customName,
+            currentQty: existing.quantity,
+            qtyToAdd: qtyToAdd,
+          );
+        }
+
+        return false;
+      }
       await database.addCustomInventory(
         productName: _customItemNameController.text,
         unitPrice: double.tryParse(_customItemPriceController.text) ?? 0.0,
@@ -129,17 +148,40 @@ class _InventoryPageState extends State<InventoryPage> {
         transactionType: customTxType,
       );
     } else {
-      if (selectedProduct != null) {
-        final product = await (database.select(
-          database.product,
-        )..where((p) => p.id.equals(selectedProduct))).getSingle();
-
-        await database.addInventory(
-          productId: selectedProduct,
-          quantity: int.tryParse(_itemQuantityController.text) ?? 1,
-          transactionType: product.transactionType,
-        );
+      if (selectedProduct == null) {
+        return false;
       }
+
+      final product = await (database.select(
+        database.product,
+      )..where((p) => p.id.equals(selectedProduct))).getSingle();
+
+      final qtyToAdd = int.tryParse(_itemQuantityController.text)!;
+
+      final existing = await database.findInventoryByProductId(
+        selectedProduct,
+      );
+
+      if (existing != null) {
+        if (mounted) {
+          Navigator.pop(context);
+          InventoryWidgets().showDuplicateDialog(
+            context: context,
+            inventoryId: existing.id,
+            productName: product.productName,
+            currentQty: existing.quantity,
+            qtyToAdd: qtyToAdd,
+          );
+        }
+
+        return false;
+      }
+
+      await database.addInventory(
+        productId: selectedProduct,
+        quantity: int.tryParse(_itemQuantityController.text) ?? 1,
+        transactionType: product.transactionType,
+      );
     }
 
     _customItemNameController.clear();
@@ -148,5 +190,6 @@ class _InventoryPageState extends State<InventoryPage> {
     _itemQuantityController.clear();
 
     if (mounted) Navigator.pop(context);
+    return true;
   }
 }

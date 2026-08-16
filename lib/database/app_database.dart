@@ -236,12 +236,26 @@ class AppDatabase extends _$AppDatabase {
         .then((value) => value > 0);
   }
 
-  //  Future<int> deleteCustomer(int id) {
-  //     return (delete(customer)..where((c) => c.id.equals(id))).go();
-  //   }
-
   Future<int> deleteInventory(int id) {
     return (delete(inventory)..where((i) => i.id.equals(id))).go();
+  }
+
+  Future<InventoryData?> findInventoryByProductId(int productId) {
+    return (select(
+      inventory,
+    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
+  }
+
+  Future<InventoryData?> findInventoryByCustomName(String customName) {
+    return (select(inventory)
+          ..where((i) => i.customName.lower().equals(customName.toLowerCase()))
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
+  Future<bool> isExistingCustom({required String customName}) async {
+    final existing = await findInventoryByCustomName(customName);
+    return existing != null;
   }
 
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<

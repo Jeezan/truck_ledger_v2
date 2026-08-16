@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   static const Color primaryColor = Colors.green;
   static const Color secondaryColor = Colors.red;
+  static const Color whiteColor = Colors.white;
 
   static Color avatarTrueColor = Colors.red.shade50;
   static Color avatarFalseColor = Colors.green.shade50;

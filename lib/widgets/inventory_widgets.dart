@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:path/path.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
@@ -16,7 +15,11 @@ class InventoryWidgets {
     required TextEditingController customItemNameController,
     required TextEditingController customItemPriceController,
     required TextEditingController customItemQuantityController,
-    required Function(bool isCustom, int? selectedProduct, String txType)
+    required Future<bool> Function(
+      bool isCustom,
+      int? selectedProduct,
+      String txType,
+    )
     onSave,
   }) {
     bool isCustomEntry = false;
@@ -226,12 +229,12 @@ class InventoryWidgets {
                         child: ElevatedButton(
                           onPressed: () async {
                             if (formKey.currentState!.validate()) {
-                              await onSave(
+                              final bool isAdded = await onSave(
                                 isCustomEntry,
                                 selectedMasterProduct,
                                 selectedTxType,
                               );
-                              if (context.mounted) {
+                              if (context.mounted && isAdded) {
                                 CustomWidgets().customSnackBar(
                                   context,
                                   'Product added to List Successfully',
@@ -285,7 +288,9 @@ class InventoryWidgets {
             return AlertDialog(
               title: const Text('Delete Inventory Item'),
 
-              content: Text('Are you sure you want to remove \'$name\'?'),
+              content: Text(
+                'Are you sure you want to remove \'$name\' from inventory?',
+              ),
 
               actions: [
                 TextButton(
@@ -329,13 +334,20 @@ class InventoryWidgets {
           borderRadius: BorderRadius.circular(12),
         ),
 
-        child: Row(
+        child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            Text('Delete Inventory'),
+            Text(
+              'Delete Inventory',
+              style: TextStyle(
+                color: AppColors.whiteColor,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
 
             SizedBox(width: 10),
-            const Icon(
+            Icon(
               Icons.delete_forever_sharp,
               color: Colors.white,
               size: 28,
@@ -491,11 +503,9 @@ class InventoryWidgets {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
 
-                  const SizedBox(height: 15),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 10,
-
+                  const SizedBox(height: 15, width: 260),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       ChoiceChip(
                         label: const Text('Add (+)'),
@@ -630,6 +640,81 @@ class InventoryWidgets {
               ],
             );
           },
+        );
+      },
+    );
+  }
+
+  void showDuplicateDialog({
+    required BuildContext context,
+    required int inventoryId,
+    required String productName,
+    required int currentQty,
+    required int qtyToAdd,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Item already in Inventory'),
+
+          content: RichText(
+            text: TextSpan(
+              style: TextStyle(
+                fontSize: 14,
+                color:
+                    Theme.of(context).textTheme.bodyMedium?.color ??
+                    Colors.black,
+              ),
+              children: [
+                TextSpan(
+                  text: '\'$productName\' ',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                TextSpan(
+                  text:
+                      'is already in your inventory with a stock of \'$currentQty\'. ',
+                ),
+
+                TextSpan(
+                  text:
+                      'Would you like to add \'$qtyToAdd\' to the existing quantity?',
+                ),
+              ],
+            ),
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () async {
+                final newQty = currentQty + qtyToAdd;
+                await database.updateInventoryQuantity(
+                  id: inventoryId,
+                  newQuantity: newQty,
+                );
+
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  CustomWidgets().customSnackBar(
+                    context,
+                    'Inventory Value of \'$productName\' updated from $currentQty >> $newQty',
+                    Colors.deepPurple,
+                  );
+                }
+              },
+              child: const Text(
+                'Yes, Update Stock',
+                style: TextStyle(color: Colors.green),
+              ),
+            ),
+          ],
         );
       },
     );
