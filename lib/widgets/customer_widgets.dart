@@ -15,6 +15,8 @@ class CustomerWidgets {
     required GlobalKey<FormState> formKey,
   }) {
     showModalBottomSheet(
+      useSafeArea: true,
+      isScrollControlled: true,
       context: context,
       builder: (context) {
         return StatefulBuilder(

@@ -124,8 +124,12 @@ class _InventoryPageState extends State<InventoryPage> {
       final customName = _customItemNameController.text.trim();
       final qtyToAdd = int.tryParse(_customItemQuantityController.text)!;
       final price = double.tryParse(_customItemPriceController.text)!;
+      double.tryParse(_customItemPriceController.text)!;
 
-      final existing = await database.findInventoryByCustomName(customName);
+      final existing = await database.findInventoryByCustomNamePrice(
+        customName,
+        price,
+      );
 
       if (existing != null) {
         if (mounted) Navigator.pop(context);

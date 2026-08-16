@@ -246,17 +246,30 @@ class AppDatabase extends _$AppDatabase {
     )..where((i) => i.productId.equals(productId))).getSingleOrNull();
   }
 
-  Future<InventoryData?> findInventoryByCustomName(String customName) {
+  Future<InventoryData?> findInventoryByCustomNamePrice(
+    String customName,
+    double customPrice,
+  ) {
     return (select(inventory)
-          ..where((i) => i.customName.lower().equals(customName.toLowerCase()))
+          ..where(
+            (i) =>
+                i.customName.lower().equals(customName.toLowerCase()) &
+                i.customPrice.equals(customPrice),
+          )
           ..limit(1))
         .getSingleOrNull();
   }
 
-  Future<bool> isExistingCustom({required String customName}) async {
-    final existing = await findInventoryByCustomName(customName);
-    return existing != null;
-  }
+  // Future<bool> isExistingCustom({
+  //   required String customName,
+  //   required double customPrice,
+  // }) async {
+  //   final existing = await findInventoryByCustomNamePrice(
+  //     customName,
+  //     customPrice,
+  //   );
+  //   return existing != null;
+  // }
 
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
 }

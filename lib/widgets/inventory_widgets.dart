@@ -320,7 +320,7 @@ class InventoryWidgets {
         if (context.mounted) {
           CustomWidgets().customSnackBar(
             context,
-            'Customer \'$name\' removed from List',
+            'Item \'$name\' removed from List',
             AppColors.secondaryColor,
           );
         }
