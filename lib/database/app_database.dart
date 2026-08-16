@@ -260,17 +260,6 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
-  // Future<bool> isExistingCustom({
-  //   required String customName,
-  //   required double customPrice,
-  // }) async {
-  //   final existing = await findInventoryByCustomNamePrice(
-  //     customName,
-  //     customPrice,
-  //   );
-  //   return existing != null;
-  // }
-
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
 }
 
