@@ -144,6 +144,8 @@ class CounterWidgets {
     required TextEditingController priceController,
     required TextEditingController qtyController,
     required String transactionType,
+    required List<CartItem> cartList,
+    required VoidCallback onCartUpdated,
     int? selectedProduct,
   }) {
     showModalBottomSheet(
@@ -299,10 +301,10 @@ class CounterWidgets {
                   ),
                   SizedBox(height: 10),
 
-                  StreamBuilder<List<ProductData>>(
-                    stream: transactionType == TransactionType.sale.value
-                        ? database.watchSaleProducts()
-                        : database.watchPurchaseProducts(),
+                  StreamBuilder<List<InventoryItemWithProduct>>(
+                    stream: database.watchInventoryWithProductsByType(
+                      transactionType,
+                    ),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
                         return Center(child: CircularProgressIndicator());
@@ -334,10 +336,10 @@ class CounterWidgets {
                               ),
 
                               items: products.map(
-                                (product) {
+                                (item) {
                                   return DropdownMenuItem(
-                                    value: product.id,
-                                    child: Text(product.productName),
+                                    value: item.inventory.id,
+                                    child: Text(item.displayName),
                                   );
                                 },
                               ).toList(),
@@ -347,11 +349,11 @@ class CounterWidgets {
                                     selectedProduct = value;
 
                                     final productSelected = products.firstWhere(
-                                      (product) => product.id == value,
+                                      (item) => item.inventory.id == value,
                                     );
 
                                     priceController.text = productSelected
-                                        .unitPrice
+                                        .displayPrice
                                         .toStringAsFixed(2);
                                   },
                                 );
@@ -454,19 +456,27 @@ class CounterWidgets {
                                 onTap: () async {
                                   if (formKey.currentState!.validate()) {
                                     final qty = int.tryParse(
-                                      qtyController.text,
+                                      qtyController.text.trim(),
                                     );
 
                                     final price = double.tryParse(
-                                      priceController.text,
+                                      priceController.text.trim(),
                                     );
 
-                                    final product = products.firstWhere(
-                                      (p) => p.id == selectedProduct,
+                                    final item = products.firstWhere(
+                                      (p) => p.inventory.id == selectedProduct,
                                     );
+
+                                    addToCart(
+                                      cartList: cartList,
+                                      item: item,
+                                      price: price!,
+                                      quantity: qty!,
+                                      transactionType: transactionType,
+                                    );
+                                    onCartUpdated();
+                                    Navigator.pop(context);
                                   }
-
-                                  Navigator.pop(context);
                                 },
                               ),
                             ),
@@ -502,4 +512,182 @@ class CounterWidgets {
       ),
     );
   }
+
+  Widget CounterCard({
+    required List<CartItem> cart,
+
+    required VoidCallback onCartUpdated,
+  }) {
+    return ListView.builder(
+      padding: EdgeInsets.symmetric(horizontal: 10),
+
+      itemCount: cart.length,
+      itemBuilder: (context, index) {
+        final item = cart[index];
+
+        final isPositive =
+            item.type == TransactionType.purchase.value ||
+            item.type == PaymentType.cashIn;
+
+        String typeLabel;
+        switch (item.type) {
+          case 'purchase':
+            typeLabel = 'Purchase';
+            break;
+          case 'cash_in':
+            typeLabel = 'Cash In';
+            break;
+          case 'cash_out':
+            typeLabel = 'Cash Out';
+            break;
+          default:
+            typeLabel = 'Sale';
+        }
+
+        return Dismissible(
+          key: ValueKey(cart[index].inventoryId),
+          direction: DismissDirection.endToStart,
+          onDismissed: (direction) {
+            cart.removeAt(index);
+            onCartUpdated;
+          },
+
+          background: Container(
+            alignment: Alignment.centerRight,
+            padding: const EdgeInsets.only(right: 20),
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            decoration: BoxDecoration(
+              color: AppColors.dismissibleWidgetColor,
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                Text(
+                  'Delete Inventory',
+                  style: TextStyle(
+                    color: AppColors.whiteColor,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+
+                SizedBox(width: 10),
+                Icon(
+                  Icons.delete_forever_sharp,
+                  color: Colors.white,
+                  size: 28,
+                ),
+              ],
+            ),
+          ),
+          child: Card(
+            elevation: 1,
+            margin: EdgeInsets.symmetric(vertical: 4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: isPositive
+                    ? Colors.green.shade100
+                    : Colors.red.shade100,
+                child: Icon(
+                  isPositive
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  color: isPositive
+                      ? Colors.green.shade700
+                      : Colors.red.shade700,
+                  size: 18,
+                ),
+              ),
+
+              title: Text(
+                item.productName,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              subtitle: Text(
+                '$typeLabel • Qty: ${item.quantity} x LKR ${item.unitPrice.toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              trailing: Text(
+                '${isPositive ? '+' : '-'} LKR ${(item.quantity * item.unitPrice).toStringAsFixed(2)}',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: isPositive
+                      ? Colors.green.shade800
+                      : Colors.red.shade800,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void addToCart({
+    required List<CartItem> cartList,
+    required InventoryItemWithProduct item,
+    required double price,
+    required int quantity,
+    required String transactionType,
+    TextEditingController? qtyController,
+    TextEditingController? priceController,
+  }) {
+    final existingIndex = cartList.indexWhere(
+      (cartItem) =>
+          cartItem.inventoryId == item.inventory.id &&
+          cartItem.type == transactionType &&
+          cartItem.unitPrice == price,
+    );
+
+    if (existingIndex != -1) {
+      cartList[existingIndex].quantity += quantity;
+    } else {
+      cartList.add(
+        CartItem(
+          inventoryId: item.inventory.id,
+          productId: item.inventory.productId,
+          productName: item.displayName,
+          unitPrice: price,
+          quantity: quantity,
+          type: transactionType,
+        ),
+      );
+    }
+
+    qtyController?.clear();
+    priceController?.clear();
+  }
+}
+
+class CartItem {
+  final int inventoryId;
+  final int? productId;
+  final String productName;
+  final double unitPrice;
+  int quantity;
+  final String type;
+
+  CartItem({
+    required this.inventoryId,
+    this.productId,
+    required this.productName,
+    required this.unitPrice,
+    required this.quantity,
+    required this.type,
+  });
+
+  double get total => unitPrice * quantity;
 }

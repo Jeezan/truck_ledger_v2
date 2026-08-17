@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
+import 'package:truck_ledger_v2/constants/app_enums.dart';
 
 part 'app_database.g.dart';
 
@@ -106,18 +107,6 @@ class AppDatabase extends _$AppDatabase {
 
   Stream<List<ProductData>> watchAllProducts() {
     return select(product).watch();
-  }
-
-  Stream<List<ProductData>> watchSaleProducts() {
-    return (select(
-      product,
-    )..where((p) => p.transactionType.equals('sale'))).watch();
-  }
-
-  Stream<List<ProductData>> watchPurchaseProducts() {
-    return (select(
-      product,
-    )..where((p) => p.transactionType.equals('purchase'))).watch();
   }
 
   //  >>>>>>>>>>>>>>> End Of Products Database Logics <<<<<<<<<<<<<<<<<<
@@ -260,6 +249,27 @@ class AppDatabase extends _$AppDatabase {
         .getSingleOrNull();
   }
 
+  Stream<List<InventoryItemWithProduct>> watchInventoryWithProductsByType(
+    String type,
+  ) {
+    final query = select(inventory).join([
+      leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
+    ])..where(inventory.tranctionType.equals(type));
+
+    return query.watch().map(
+      (rows) {
+        return rows.map(
+          (row) {
+            return InventoryItemWithProduct(
+              inventory: row.readTable(inventory),
+              product: row.readTableOrNull(product),
+            );
+          },
+        ).toList();
+      },
+    );
+  }
+
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
 }
 
@@ -269,6 +279,12 @@ class InventoryItemWithProduct {
   final ProductData? product;
 
   InventoryItemWithProduct({required this.inventory, this.product});
+  // Retrieves custom name if custom item, otherwise falls back to catalog product name
+  String get displayName =>
+      inventory.customName ?? product?.productName ?? 'Unknown Item';
+
+  // Retrieves custom price if custom item, otherwise falls back to catalog unit price
+  double get displayPrice => inventory.customPrice ?? product?.unitPrice ?? 0.0;
 }
 
 final appDatabase = AppDatabase();

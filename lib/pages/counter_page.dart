@@ -3,7 +3,6 @@ import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
 import 'package:truck_ledger_v2/widgets/counter_widgets.dart';
-import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class CounterPage extends StatefulWidget {
   const CounterPage({super.key});
@@ -24,6 +23,7 @@ class _CounterPageState extends State<CounterPage> {
 
   int? _selectedCustomer;
   int? _selectedProduct;
+  final List<CartItem> _cart = [];
 
   final database = AppDatabase();
 
@@ -48,7 +48,7 @@ class _CounterPageState extends State<CounterPage> {
         children: [
           CounterWidgets().customDropDown(selectedCustomer: _selectedCustomer),
 
-          SizedBox(height: 5),
+          const SizedBox(height: 5),
 
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
@@ -62,34 +62,65 @@ class _CounterPageState extends State<CounterPage> {
                   priceController: _priceController,
                   transactionType: _transactionType,
                   qtyController: _qtyController,
+                  cartList: _cart,
+                  onCartUpdated: () {
+                    setState(() {});
+                  },
                 );
               },
             ),
           ),
 
-          SizedBox(height: 5),
-
-          Row(
-            children: [
-              Text(
-                'Active Items in Counter',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.grey,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Active Items in Counter',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
 
-              //  TODo: Add the cart length
-              Text(
-                'Cart Length Entries',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                  color: Colors.grey,
+                Text(
+                  '${_cart.length} entries',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: Colors.grey,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+
+          Expanded(
+            child: _cart.isEmpty
+                ? const Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'No items in counter cart yet.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        SizedBox(height: 10),
+                        Icon(
+                          Icons.shopping_cart_checkout_sharp,
+                          color: Colors.grey,
+                          size: 50,
+                        ),
+                      ],
+                    ),
+                  )
+                : CounterWidgets().CounterCard(
+                    cart: _cart,
+                    onCartUpdated: () {
+                      setState(() {});
+                    },
+                  ),
           ),
         ],
       ),
