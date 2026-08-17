@@ -547,9 +547,10 @@ class CounterWidgets {
         return Dismissible(
           key: ValueKey(cart[index].inventoryId),
           direction: DismissDirection.endToStart,
-          onDismissed: (direction) {
+          onDismissed: (direction){
             cart.removeAt(index);
-            onCartUpdated;
+        
+             onCartUpdated;
           },
 
           background: Container(
