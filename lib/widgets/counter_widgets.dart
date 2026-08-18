@@ -5,7 +5,7 @@ import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
 
 class CounterWidgets {
-  final database = AppDatabase();
+  final database = appDatabase;
   AppBar counterAppBar({
     required String title,
     required Color backgroundColor,
@@ -27,6 +27,7 @@ class CounterWidgets {
 
   Widget customDropDown({
     int? selectedCustomer,
+    required ValueChanged<int?> onChanged,
   }) {
     return StreamBuilder(
       stream: database.watchAllCustomers(),
@@ -89,7 +90,7 @@ class CounterWidgets {
                 );
               },
             ).toList(),
-            onChanged: (value) {},
+            onChanged: onChanged,
           ),
         );
       },
@@ -148,6 +149,8 @@ class CounterWidgets {
     required VoidCallback onCartUpdated,
     int? selectedProduct,
   }) {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
     showModalBottomSheet(
       context: context,
 
@@ -198,6 +201,7 @@ class CounterWidgets {
                               transactionType = TransactionType.purchase.value;
                               selectedProduct = null;
                               priceController.clear();
+                              qtyController.clear();
                             }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -230,6 +234,7 @@ class CounterWidgets {
                               transactionType = TransactionType.sale.value;
                               selectedProduct = null;
                               priceController.clear();
+                              qtyController.clear();
                             }),
                             child: Container(
                               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -311,9 +316,6 @@ class CounterWidgets {
                       }
 
                       final products = snapshot.data ?? [];
-
-                      final GlobalKey<FormState> formKey =
-                          GlobalKey<FormState>();
 
                       return Form(
                         key: formKey,
@@ -547,10 +549,10 @@ class CounterWidgets {
         return Dismissible(
           key: ValueKey(cart[index].inventoryId),
           direction: DismissDirection.endToStart,
-          onDismissed: (direction){
+          onDismissed: (direction) {
             cart.removeAt(index);
-        
-             onCartUpdated;
+
+            onCartUpdated;
           },
 
           background: Container(

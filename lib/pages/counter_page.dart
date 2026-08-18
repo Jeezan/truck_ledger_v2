@@ -25,7 +25,7 @@ class _CounterPageState extends State<CounterPage> {
   int? _selectedProduct;
   final List<CartItem> _cart = [];
 
-  final database = AppDatabase();
+  final database = appDatabase;
 
   @override
   void dispose() {
@@ -46,57 +46,64 @@ class _CounterPageState extends State<CounterPage> {
       ),
       body: Column(
         children: [
-          CounterWidgets().customDropDown(selectedCustomer: _selectedCustomer),
-
-          const SizedBox(height: 5),
-
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: CounterWidgets().customButton(
-              width: double.infinity,
-              text: 'Add Products',
-              icon: Icons.add_circle_outline_sharp,
-              onTap: () {
-                CounterWidgets().onAddProductButtonPressed(
-                  context: context,
-                  priceController: _priceController,
-                  transactionType: _transactionType,
-                  qtyController: _qtyController,
-                  cartList: _cart,
-                  onCartUpdated: () {
-                    setState(() {});
-                  },
-                );
-              },
-            ),
+          CounterWidgets().customDropDown(
+            selectedCustomer: _selectedCustomer,
+            onChanged: (value) {
+              setState(() {
+                _selectedCustomer = value;
+              });
+            },
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Active Items in Counter',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-
-                Text(
-                  '${_cart.length} entries',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
-                    color: Colors.grey,
-                  ),
-                ),
-              ],
+          if (_selectedCustomer != null) ...[
+            const SizedBox(height: 5),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: CounterWidgets().customButton(
+                width: double.infinity,
+                text: 'Add Products',
+                icon: Icons.add_circle_outline_sharp,
+                onTap: () {
+                  CounterWidgets().onAddProductButtonPressed(
+                    context: context,
+                    priceController: _priceController,
+                    transactionType: _transactionType,
+                    qtyController: _qtyController,
+                    cartList: _cart,
+                    onCartUpdated: () {
+                      setState(() {});
+                    },
+                  );
+                },
+              ),
             ),
-          ),
 
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Active Items in Counter',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                  Text(
+                    '${_cart.length} entries',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           Expanded(
             child: _cart.isEmpty
                 ? const Center(
