@@ -503,7 +503,7 @@ class InventoryWidgets {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
 
-                  const SizedBox(height: 15, width: 260),
+                  const SizedBox(height: 15, width: 280),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -651,6 +651,7 @@ class InventoryWidgets {
     required String productName,
     required int currentQty,
     required int qtyToAdd,
+    required TextEditingController qtyController,
   }) {
     showDialog(
       context: context,
@@ -661,7 +662,7 @@ class InventoryWidgets {
           content: RichText(
             text: TextSpan(
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 16,
                 color:
                     Theme.of(context).textTheme.bodyMedium?.color ??
                     Colors.black,
@@ -699,6 +700,8 @@ class InventoryWidgets {
                   id: inventoryId,
                   newQuantity: newQty,
                 );
+
+                qtyController.clear();
 
                 if (context.mounted) {
                   Navigator.pop(context);

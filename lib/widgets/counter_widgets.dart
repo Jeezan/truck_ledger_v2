@@ -298,7 +298,16 @@ class CounterWidgets {
                           text: 'Add Payment',
                           onTap: () {
                             Navigator.pop(context);
-                            // onAddPaymentButtonPress();
+                            onAddPaymentButtonPress(
+                              context: context,
+                              paymentType: PaymentType.cashIn.value,
+
+                              // TODO potential Bug place
+                              paymentController: TextEditingController(),
+                              paymentAmountController: TextEditingController(),
+                              cart: cartList,
+                              onCartUpdated: onCartUpdated,
+                            );
                           },
                         ),
                       ),
@@ -465,9 +474,72 @@ class CounterWidgets {
                                       priceController.text.trim(),
                                     );
 
-                                    final item = products.firstWhere(
-                                      (p) => p.inventory.id == selectedProduct,
-                                    );
+                                    final item = products
+                                        .cast<InventoryItemWithProduct?>()
+                                        .firstWhere(
+                                          (p) =>
+                                              p?.inventory.id ==
+                                              selectedProduct,
+                                          orElse: () => null,
+                                        );
+                                    if (item == null) return;
+                                    // Stock limit check for Sales
+                                    if (transactionType ==
+                                        TransactionType.sale.value) {
+                                      final availableStock =
+                                          item.inventory.quantity;
+
+                                      // Calculate quantity of this item ALREADY added to cart
+                                      final existingInCartQty = cartList
+                                          .where(
+                                            (cartItem) =>
+                                                cartItem.inventoryId ==
+                                                    item.inventory.id &&
+                                                cartItem.type ==
+                                                    TransactionType.sale.value,
+                                          )
+                                          .fold<int>(
+                                            0,
+                                            (sum, cartItem) =>
+                                                sum + cartItem.quantity,
+                                          );
+
+                                      final totalRequestedQty =
+                                          existingInCartQty + qty!;
+
+                                      if (totalRequestedQty > availableStock) {
+                                        final remainingAllowed =
+                                            availableStock - existingInCartQty;
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => AlertDialog(
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                            ),
+                                            title: const Text(
+                                              'Insufficient Stock',
+                                            ),
+                                            content: Text(
+                                              existingInCartQty > 0
+                                                  ? 'Total stock available: $availableStock.\n'
+                                                        'You already have $existingInCartQty in your cart.\n'
+                                                        'You can only add up to $remainingAllowed more unit(s).'
+                                                  : 'You requested $qty units of "${item.displayName}", but only $availableStock units are available in stock.',
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
+                                                child: const Text('OK'),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        return;
+                                      }
+                                    }
 
                                     addToCart(
                                       cartList: cartList,
@@ -478,6 +550,8 @@ class CounterWidgets {
                                     );
                                     onCartUpdated();
                                     Navigator.pop(context);
+                                    qtyController.clear();
+                                    priceController.clear();
                                   }
                                 },
                               ),
@@ -499,23 +573,240 @@ class CounterWidgets {
     );
   }
 
-  void showCustomDialog({required BuildContext context, required String text}) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Invalid Input'),
-        content: Text('The value you entered is invalid! $text'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ],
+  void onAddPaymentButtonPress({
+    required BuildContext context,
+    required String paymentType,
+    required TextEditingController paymentController,
+    required TextEditingController paymentAmountController,
+    required List<CartItem> cart,
+    required VoidCallback onCartUpdated,
+  }) {
+    final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    paymentController.text = paymentType == PaymentType.cashIn.value
+        ? 'Cash Paid by Customer'
+        : 'Cash Paid to Customer';
+    showModalBottomSheet(
+      backgroundColor: Colors.grey.shade100,
+      useSafeArea: true,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Add Payment',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade200,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setModalState(() {
+                                paymentType = PaymentType.cashIn.value;
+                                paymentController.clear();
+                                paymentController.text = ' Paid by Customer';
+                              }),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: paymentType == PaymentType.cashIn.value
+                                      ? Colors.green.shade700
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Cash In (+)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        paymentType == PaymentType.cashIn.value
+                                        ? Colors.white
+                                        : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: GestureDetector(
+                              onTap: () => setModalState(() {
+                                paymentType = PaymentType.cashOut.value;
+                                paymentController.clear();
+                                paymentController.text = ' Paid to Customer';
+                              }),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color:
+                                      paymentType == PaymentType.cashOut.value
+                                      ? Colors.red.shade700
+                                      : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  'Cash Out (-)',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color:
+                                        paymentType == PaymentType.cashOut.value
+                                        ? Colors.white
+                                        : Colors.grey.shade700,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      children: [
+                        Icon(
+                          paymentType == PaymentType.cashIn.value
+                              ? Icons.arrow_circle_down_rounded
+                              : Icons.arrow_circle_up_rounded,
+                          color: paymentType == PaymentType.cashIn.value
+                              ? Colors.green.shade700
+                              : Colors.red.shade700,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          paymentType == PaymentType.cashIn.value
+                              ? 'Cash Paid by Customer (+)'
+                              : 'Cash Paid to Customer (-)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                            color: paymentType == PaymentType.cashIn.value
+                                ? Colors.green.shade800
+                                : Colors.red.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: paymentController,
+                      decoration: InputDecoration(
+                        labelText: 'Payment Note',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        isDense: true,
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: paymentAmountController,
+                      keyboardType: TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: 'Payment Amount (LKR)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        isDense: true,
+                        filled: true,
+                        fillColor: Colors.grey.shade50,
+                      ),
+
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Please enter payment amount';
+                        }
+                        final amount = double.tryParse(value.trim());
+                        if (amount == null || amount <= 0) {
+                          return 'Please enter a valid positive amount';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: customButton(
+                        icon: Icons.add_circle_outline,
+                        width: double.infinity,
+                        text: 'Add to Counter List',
+                        onTap: () async {
+                          if (formKey.currentState!.validate()) {
+                            final amount =
+                                double.tryParse(paymentAmountController.text) ??
+                                0;
+                            final note = paymentController.text.trim();
+
+                            cart.add(
+                              CartItem(
+                                inventoryId: -1,
+                                productName: note.isNotEmpty
+                                    ? note
+                                    : (paymentType == PaymentType.cashIn.value
+                                          ? 'Cash In Payment'
+                                          : 'Cash Out Payment'),
+                                unitPrice: amount,
+                                quantity: 1,
+                                type: paymentType,
+                              ),
+                            );
+
+                            paymentAmountController.clear();
+                            paymentController.clear();
+                            onCartUpdated();
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                            }
+                          }
+                        },
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.07),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
-  Widget CounterCard({
+  Widget counterCard({
     required List<CartItem> cart,
 
     required VoidCallback onCartUpdated,
@@ -529,7 +820,7 @@ class CounterWidgets {
 
         final isPositive =
             item.type == TransactionType.purchase.value ||
-            item.type == PaymentType.cashIn;
+            item.type == PaymentType.cashIn.value;
 
         String typeLabel;
         switch (item.type) {
@@ -552,7 +843,7 @@ class CounterWidgets {
           onDismissed: (direction) {
             cart.removeAt(index);
 
-            onCartUpdated;
+            onCartUpdated();
           },
 
           background: Container(
@@ -568,7 +859,7 @@ class CounterWidgets {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
-                  'Delete Inventory',
+                  'Delete Item from Cart',
                   style: TextStyle(
                     color: AppColors.whiteColor,
                     fontWeight: FontWeight.bold,
@@ -639,6 +930,148 @@ class CounterWidgets {
     );
   }
 
+  Widget bottomSummaryCard({
+    required int? selectedCustomer,
+    required List<CartItem> cart,
+    required VoidCallback onCompleteCheckout,
+  }) {
+    if (selectedCustomer == null) {
+      return const SizedBox();
+    }
+    return StreamBuilder<CustomerData?>(
+      stream: database.watchCustomer(selectedCustomer),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const SizedBox();
+        }
+        final customer = snapshot.data!;
+        final previousBalance = customer.currentBalance;
+        final finalBalance = previousBalance + cartTotal(cart: cart);
+
+        return Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(20),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.shade300,
+                blurRadius: 10,
+                offset: const Offset(0, -4),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Previous Balance:',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  Text(
+                    'LKR ${previousBalance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: previousBalance >= 0
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Net Counter Change:',
+                    style: TextStyle(fontSize: 13, color: Colors.grey),
+                  ),
+                  Text(
+                    'LKR ${cartTotal(cart: cart).toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: cartTotal(cart: cart) >= 0
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Divider(height: 1),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Final Balance:',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    'LKR ${finalBalance.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                      color: finalBalance >= 0
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: customButton(
+                  text: 'Complete Transaction',
+                  width: double.infinity,
+                  onTap: () {
+                    showCheckoutDialog(
+                      context: context,
+                      totalFinalBalance: finalBalance,
+                      customer: customer,
+                      cart: cart,
+                      selectedCustomer: selectedCustomer,
+                      onCompleteCheckout: onCompleteCheckout,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // CART TOTAL METHOD
+  double cartTotal({required List<CartItem> cart}) {
+    return cart.fold<double>(0.0, (sum, item) {
+      final double itemTotal = item.unitPrice * item.quantity;
+
+      // Purchases and Cash In increase the net amount
+      if (item.type == TransactionType.purchase.value ||
+          item.type == PaymentType.cashIn.value) {
+        return sum + itemTotal;
+      } else {
+        // Sales and Cash Out reduce the balance
+        return sum - itemTotal;
+      }
+    });
+  }
+
   void addToCart({
     required List<CartItem> cartList,
     required InventoryItemWithProduct item,
@@ -672,6 +1105,114 @@ class CounterWidgets {
 
     qtyController?.clear();
     priceController?.clear();
+  }
+
+  // Complete Transaction Confirmation Dialog
+  void showCheckoutDialog({
+    required BuildContext context,
+    required double totalFinalBalance,
+    required CustomerData customer,
+    required List<CartItem> cart,
+
+    required int? selectedCustomer,
+    required VoidCallback onCompleteCheckout,
+  }) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text('Confirm Transaction for ${customer.customerName}'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      'Previous Balance: ',
+                    ),
+                    Text(
+                      'LKR. ${customer.currentBalance}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w500,
+                        color: customer.currentBalance >= 0
+                            ? Colors.green.shade700
+                            : Colors.red.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text('Cart Items Count: ${cart.length}'),
+                const SizedBox(height: 10),
+                const Divider(),
+                const SizedBox(height: 6),
+                const Text(
+                  'Final Account Balance:',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+                Text(
+                  'LKR. $totalFinalBalance',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: totalFinalBalance >= 0
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Are you sure you want to process this counter settlement and update inventory stocks?',
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.teal.shade700,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              onPressed: () async {
+                await database.completeCheckout(
+                  customerId: selectedCustomer!,
+                  netChange: cartTotal(cart: cart),
+                  cartItems: cart,
+                );
+
+                onCompleteCheckout();
+
+                Navigator.pop(context);
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text(
+                        'Transaction completed successfully!',
+                      ),
+                      backgroundColor: Colors.green.shade700,
+                    ),
+                  );
+                }
+              },
+              child: const Text('Confirm & Save'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

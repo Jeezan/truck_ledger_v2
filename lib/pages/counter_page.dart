@@ -108,6 +108,7 @@ class _CounterPageState extends State<CounterPage> {
             child: _cart.isEmpty
                 ? const Center(
                     child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           'No items in counter cart yet.',
@@ -122,13 +123,25 @@ class _CounterPageState extends State<CounterPage> {
                       ],
                     ),
                   )
-                : CounterWidgets().CounterCard(
+                : CounterWidgets().counterCard(
                     cart: _cart,
                     onCartUpdated: () {
                       setState(() {});
                     },
                   ),
           ),
+
+          if (_cart.isNotEmpty)
+            CounterWidgets().bottomSummaryCard(
+              selectedCustomer: _selectedCustomer,
+              cart: _cart,
+              onCompleteCheckout: () {
+                setState(() {
+                  _cart.clear();
+                  _selectedCustomer = null;
+                });
+              },
+            ),
         ],
       ),
     );

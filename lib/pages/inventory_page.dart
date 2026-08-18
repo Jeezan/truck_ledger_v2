@@ -140,6 +140,7 @@ class _InventoryPageState extends State<InventoryPage> {
             productName: customName,
             currentQty: existing.quantity,
             qtyToAdd: qtyToAdd,
+            qtyController: _customItemQuantityController,
           );
         }
 
@@ -175,6 +176,7 @@ class _InventoryPageState extends State<InventoryPage> {
             productName: product.productName,
             currentQty: existing.quantity,
             qtyToAdd: qtyToAdd,
+            qtyController: _itemQuantityController,
           );
         }
 

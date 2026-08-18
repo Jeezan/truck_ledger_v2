@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
+import 'package:truck_ledger_v2/widgets/counter_widgets.dart';
 
 part 'app_database.g.dart';
 
@@ -128,6 +129,10 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
+  Future<CustomerData?> getCustomerById(int id) {
+    return (select(customer)..where((c) => c.id.equals(id))).getSingle();
+  }
+
   Stream<List<CustomerData>> watchAllCustomers() {
     return select(customer).watch();
   }
@@ -225,6 +230,12 @@ class AppDatabase extends _$AppDatabase {
         .then((value) => value > 0);
   }
 
+  Future<InventoryData?> getInventoryByProductId(int productId) {
+    return (select(
+      inventory,
+    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
+  }
+
   Future<int> deleteInventory(int id) {
     return (delete(inventory)..where((i) => i.id.equals(id))).go();
   }
@@ -271,6 +282,103 @@ class AppDatabase extends _$AppDatabase {
   }
 
   //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
+
+  //  >>>>>>>>>>>>>>> Checkout Logic <<<<<<<<<<<<<<<<<<
+
+  Future<void> completeCheckout({
+    required int customerId,
+    required double netChange,
+    required List<CartItem> cartItems,
+  }) async {
+    await transaction(() async {
+      // 1. Create Transaction Master
+      final masterId = await into(transactionMaster).insert(
+        TransactionMasterCompanion.insert(
+          customerId: customerId,
+          totalAmount: netChange,
+        ),
+      );
+
+      // Fetch Customer Data safely without streams inside transaction
+      final customerData = await getCustomerById(customerId);
+      double runningBalance = customerData?.currentBalance ?? 0.0;
+
+      // 2. Process each cart item
+      for (var item in cartItems) {
+        await into(transactionItem).insert(
+          TransactionItemCompanion.insert(
+            transactionId: masterId,
+            productId: Value(item.productId),
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            type: item.type,
+          ),
+        );
+
+        double itemTotal = item.unitPrice * item.quantity;
+
+        final isCredit =
+            item.type == TransactionType.purchase.value ||
+            item.type == PaymentType.cashIn.value;
+
+        if (isCredit) {
+          runningBalance += itemTotal;
+        } else {
+          runningBalance -= itemTotal;
+        }
+
+        // Insert into CustomerLedger
+        await into(customerLedger).insert(
+          CustomerLedgerCompanion.insert(
+            customerId: customerId,
+            productId: Value(item.productId),
+            transactionType: item.type,
+            quantity: Value(item.quantity),
+            unitPrice: Value(item.unitPrice),
+            creditAmount: Value(isCredit ? itemTotal : 0),
+            debitAmount: Value(!isCredit ? itemTotal : 0),
+            balance: runningBalance,
+          ),
+        );
+
+        // SKIP INVENTORY UPDATE FOR CASH
+        if (item.type == PaymentType.cashIn ||
+            item.type == PaymentType.cashOut) {
+          continue;
+        }
+
+        // 3. Update Inventory
+        final existingInventory = await getInventoryByProductId(
+          item.productId!,
+        );
+        int qtyChange = item.type == TransactionType.purchase.value
+            ? item.quantity
+            : -item.quantity;
+
+        if (existingInventory != null) {
+          await updateInventoryQuantity(
+            id: existingInventory.id,
+            newQuantity: existingInventory.quantity + qtyChange,
+          );
+        } else {
+          int initialQty = qtyChange < 0 ? 0 : qtyChange;
+          await addInventory(
+            productId: item.productId!,
+            quantity: initialQty,
+            transactionType: item.type,
+          );
+        }
+      }
+
+      // 4. Update Customer Balance
+      if (customerData != null) {
+        await (update(customer)..where((c) => c.id.equals(customerId))).write(
+          CustomerCompanion(currentBalance: Value(runningBalance)),
+        );
+      }
+    });
+  }
 }
 
 // Class for the Inventory and Product
