@@ -292,6 +292,7 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     await transaction(() async {
       // 1. Create Transaction Master
+
       final masterId = await into(transactionMaster).insert(
         TransactionMasterCompanion.insert(
           customerId: customerId,
@@ -343,8 +344,7 @@ class AppDatabase extends _$AppDatabase {
         );
 
         // SKIP INVENTORY UPDATE FOR CASH
-        if (item.type == PaymentType.cashIn ||
-            item.type == PaymentType.cashOut) {
+        if (item.isPayment || item.productId == null) {
           continue;
         }
 

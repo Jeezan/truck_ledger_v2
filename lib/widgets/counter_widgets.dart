@@ -300,11 +300,7 @@ class CounterWidgets {
                             Navigator.pop(context);
                             onAddPaymentButtonPress(
                               context: context,
-                              paymentType: PaymentType.cashIn.value,
 
-                              // TODO potential Bug place
-                              paymentController: TextEditingController(),
-                              paymentAmountController: TextEditingController(),
                               cart: cartList,
                               onCartUpdated: onCartUpdated,
                             );
@@ -575,17 +571,19 @@ class CounterWidgets {
 
   void onAddPaymentButtonPress({
     required BuildContext context,
-    required String paymentType,
-    required TextEditingController paymentController,
-    required TextEditingController paymentAmountController,
     required List<CartItem> cart,
     required VoidCallback onCartUpdated,
   }) {
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+    final paymentController = TextEditingController(
+      text: 'Cash Paid by Customer',
+    );
+    final paymentAmountController = TextEditingController();
+    String paymentType = PaymentType.cashIn.value;
     paymentController.text = paymentType == PaymentType.cashIn.value
         ? 'Cash Paid by Customer'
         : 'Cash Paid to Customer';
-    showModalBottomSheet(
+    showModalBottomSheet<CartItem>(
       backgroundColor: Colors.grey.shade100,
       useSafeArea: true,
       isScrollControlled: true,
@@ -733,7 +731,7 @@ class CounterWidgets {
                     const SizedBox(height: 10),
                     TextFormField(
                       controller: paymentAmountController,
-                      keyboardType: TextInputType.numberWithOptions(
+                      keyboardType: const TextInputType.numberWithOptions(
                         decimal: true,
                       ),
                       decoration: InputDecoration(
@@ -766,31 +764,21 @@ class CounterWidgets {
                         text: 'Add to Counter List',
                         onTap: () async {
                           if (formKey.currentState!.validate()) {
-                            final amount =
-                                double.tryParse(paymentAmountController.text) ??
-                                0;
-                            final note = paymentController.text.trim();
-
-                            cart.add(
-                              CartItem(
-                                inventoryId: -1,
-                                productName: note.isNotEmpty
-                                    ? note
-                                    : (paymentType == PaymentType.cashIn.value
-                                          ? 'Cash In Payment'
-                                          : 'Cash Out Payment'),
-                                unitPrice: amount,
-                                quantity: 1,
-                                type: paymentType,
+                            final item = CartItem.payment(
+                              paymentType: paymentType,
+                              amount: double.parse(
+                                paymentAmountController.text.trim(),
                               ),
+                              note: paymentController.text,
                             );
+                            cart.add(item);
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
 
                             paymentAmountController.clear();
                             paymentController.clear();
                             onCartUpdated();
-                            if (context.mounted) {
-                              Navigator.pop(context);
-                            }
                           }
                         },
                       ),
@@ -838,7 +826,9 @@ class CounterWidgets {
         }
 
         return Dismissible(
-          key: ValueKey(cart[index].inventoryId),
+          key: ValueKey(
+            '${cart[index].inventoryId}_${cart[index].type}_$index',
+          ),
           direction: DismissDirection.endToStart,
           onDismissed: (direction) {
             cart.removeAt(index);
@@ -1233,5 +1223,32 @@ class CartItem {
     required this.type,
   });
 
-  double get total => unitPrice * quantity;
+  factory CartItem.payment({
+    required String paymentType,
+    required double amount,
+    String? note,
+  }) {
+    final isCashIn = paymentType == PaymentType.cashIn.value;
+    final defaultNote = isCashIn
+        ? 'Cash Paid by Customer'
+        : 'Cash Paid to Customer';
+
+    return CartItem(
+      inventoryId: DateTime.now().microsecondsSinceEpoch,
+      productId: null,
+      productName: (note != null && note.trim().isNotEmpty)
+          ? note.trim()
+          : defaultNote,
+      unitPrice: amount,
+      quantity: 1,
+      type: paymentType,
+    );
+  }
+
+  bool get isPayment =>
+      type == PaymentType.cashIn.value || type == PaymentType.cashOut.value;
+
+  bool get isPositive =>
+      type == TransactionType.purchase.value ||
+      type == PaymentType.cashIn.value;
 }
