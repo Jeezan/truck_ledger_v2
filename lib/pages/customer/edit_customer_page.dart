@@ -67,6 +67,8 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                     'Are you sure you want to delete customer \'${widget.customerData.customerName}\' permanantly?',
                 onPressed: () {
                   database.deleteCustomer(widget.customerData.id);
+                  Navigator.pop(context);
+                  Navigator.pop(context);
 
                   CustomWidgets().customSnackBar(
                     context,

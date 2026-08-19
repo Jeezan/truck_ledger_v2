@@ -4,6 +4,7 @@ import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/services/firebase_sync_service.dart';
 
 class CounterWidgets {
   final database = appDatabase;
@@ -1121,6 +1122,7 @@ class CounterWidgets {
                 ),
               ),
               onPressed: () async {
+                // 1. Save locally to Drift
                 await database.completeCheckout(
                   customerId: selectedCustomer!,
                   netChange: cartTotal(cart: cart),
@@ -1128,8 +1130,8 @@ class CounterWidgets {
                 );
 
                 onCompleteCheckout();
-
                 Navigator.pop(context);
+
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
@@ -1139,6 +1141,15 @@ class CounterWidgets {
                       backgroundColor: Colors.green.shade700,
                     ),
                   );
+                }
+
+                // 2. Trigger background sync silently to cloud
+                try {
+                  // Make sure you import FirebaseSyncService at the top of this file!
+                  FirebaseSyncService().pushAllData(database);
+                } catch (e) {
+                  // Fails silently, it will retry on the next app open/close
+                  debugPrint('Silent transaction sync failed: $e');
                 }
               },
               child: const Text('Confirm & Save'),

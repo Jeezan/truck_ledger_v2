@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "906090292152",
+    "project_id": "gfh-farm-management",
+    "storage_bucket": "gfh-farm-management.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:906090292152:android:72f52465adbae579b1a54d",
+        "android_client_info": {
+          "package_name": "com.example.truck_ledger_v2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyADe0t0SB0Akm0avC4t2O_uKOirSx7DWmA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
