@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
@@ -6,6 +7,9 @@ import 'package:truck_ledger_v2/database/app_database.dart';
 
 class CounterWidgets {
   final database = appDatabase;
+
+  final NumberFormat _currencyFormat = NumberFormat('#,##0.00', 'en_US');
+
   AppBar counterAppBar({
     required String title,
     required Color backgroundColor,
@@ -18,9 +22,7 @@ class CounterWidgets {
         ),
       ),
       backgroundColor: backgroundColor,
-
       elevation: 0,
-
       centerTitle: true,
     );
   }
@@ -40,7 +42,6 @@ class CounterWidgets {
 
         return Container(
           padding: const EdgeInsets.all(10),
-
           decoration: BoxDecoration(
             color: AppColors.counterAppbarBackgroundColor,
             borderRadius: const BorderRadius.vertical(
@@ -54,27 +55,21 @@ class CounterWidgets {
               ),
             ],
           ),
-
           child: DropdownButtonFormField(
             icon: const Icon(
               Icons.arrow_drop_down,
               color: AppColors.whiteColor,
             ),
-
             initialValue: selectedCustomer,
-
             dropdownColor: AppColors.counterAppbarBackgroundColor,
             isExpanded: true,
-
             decoration: InputDecoration(
               labelText: 'Select Customer',
               labelStyle: TextStyle(color: Colors.teal.shade200),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-
                 borderSide: BorderSide.none,
               ),
-
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.15),
               isDense: true,
@@ -153,12 +148,10 @@ class CounterWidgets {
 
     showModalBottomSheet(
       context: context,
-
       backgroundColor: Colors.grey.shade100,
       useSafeArea: true,
       isScrollControlled: true,
-
-      shape: RoundedRectangleBorder(
+      shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
@@ -171,28 +164,23 @@ class CounterWidgets {
                 right: 20,
                 top: 20,
               ),
-
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-
                 children: [
-                  Text(
+                  const Text(
                     'Add Product to Counter',
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-
-                  SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   Container(
-                    padding: EdgeInsets.all(4),
-
+                    padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(8),
                     ),
-
                     child: Row(
                       children: [
                         Expanded(
@@ -264,7 +252,6 @@ class CounterWidgets {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
                   Row(
                     children: [
@@ -300,7 +287,6 @@ class CounterWidgets {
                             Navigator.pop(context);
                             onAddPaymentButtonPress(
                               context: context,
-
                               cart: cartList,
                               onCartUpdated: onCartUpdated,
                             );
@@ -309,15 +295,14 @@ class CounterWidgets {
                       ),
                     ],
                   ),
-                  SizedBox(height: 10),
-
+                  const SizedBox(height: 10),
                   StreamBuilder<List<InventoryItemWithProduct>>(
                     stream: database.watchInventoryWithProductsByType(
                       transactionType,
                     ),
                     builder: (context, snapshot) {
                       if (!snapshot.hasData) {
-                        return Center(child: CircularProgressIndicator());
+                        return const Center(child: CircularProgressIndicator());
                       }
 
                       final products = snapshot.data ?? [];
@@ -328,20 +313,16 @@ class CounterWidgets {
                           children: [
                             DropdownButtonFormField(
                               initialValue: selectedProduct,
-
                               isExpanded: true,
-
                               decoration: InputDecoration(
                                 labelText: 'Select Product from Stock',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-
                                 isDense: true,
                                 filled: true,
                                 fillColor: Colors.grey.shade50,
                               ),
-
                               items: products.map(
                                 (item) {
                                   return DropdownMenuItem(
@@ -354,11 +335,10 @@ class CounterWidgets {
                                 setState(
                                   () {
                                     selectedProduct = value;
-
                                     final productSelected = products.firstWhere(
                                       (item) => item.inventory.id == value,
                                     );
-
+                                    // TextControllers must keep standard decimal string for double.tryParse
                                     priceController.text = productSelected
                                         .displayPrice
                                         .toStringAsFixed(2);
@@ -369,91 +349,72 @@ class CounterWidgets {
                                 if (value == null) {
                                   return 'Please select a product';
                                 }
-
                                 return null;
                               },
                             ),
-
-                            SizedBox(height: 10),
-
+                            const SizedBox(height: 10),
                             Row(
                               children: [
                                 Expanded(
                                   child: TextFormField(
                                     controller: priceController,
                                     keyboardType: TextInputType.number,
-
                                     decoration: InputDecoration(
                                       labelText: 'Unit Price (LKR.)',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
                                         return 'Please enter the unit price';
                                       }
-
                                       final price = double.tryParse(
                                         value.trim(),
                                       );
-
                                       if (price == null) {
                                         return 'Please enter a valid price';
                                       }
-
                                       if (price <= 0) {
                                         return 'Price must be greater than 0';
                                       }
-
                                       return null;
                                     },
                                   ),
                                 ),
-
-                                SizedBox(width: 12),
-
+                                const SizedBox(width: 12),
                                 Expanded(
                                   child: TextFormField(
                                     controller: qtyController,
                                     keyboardType: TextInputType.number,
-
                                     decoration: InputDecoration(
                                       labelText: 'Quantity',
                                       border: OutlineInputBorder(
                                         borderRadius: BorderRadius.circular(10),
                                       ),
                                     ),
-
                                     validator: (value) {
                                       if (value == null ||
                                           value.trim().isEmpty) {
                                         return 'Please enter the quantity';
                                       }
-
                                       final quantity = int.tryParse(
                                         value.trim(),
                                       );
-
                                       if (quantity == null) {
                                         return 'Please enter a valid quantity';
                                       }
-
                                       if (quantity <= 0) {
                                         return 'Quantity must be greater than 0';
                                       }
-
                                       return null;
                                     },
                                   ),
                                 ),
                               ],
                             ),
-
-                            SizedBox(height: 10),
-
+                            const SizedBox(height: 10),
                             SizedBox(
                               width: double.infinity,
                               child: customButton(
@@ -465,11 +426,9 @@ class CounterWidgets {
                                     final qty = int.tryParse(
                                       qtyController.text.trim(),
                                     );
-
                                     final price = double.tryParse(
                                       priceController.text.trim(),
                                     );
-
                                     final item = products
                                         .cast<InventoryItemWithProduct?>()
                                         .firstWhere(
@@ -479,13 +438,12 @@ class CounterWidgets {
                                           orElse: () => null,
                                         );
                                     if (item == null) return;
-                                    // Stock limit check for Sales
+
                                     if (transactionType ==
                                         TransactionType.sale.value) {
                                       final availableStock =
                                           item.inventory.quantity;
 
-                                      // Calculate quantity of this item ALREADY added to cart
                                       final existingInCartQty = cartList
                                           .where(
                                             (cartItem) =>
@@ -575,14 +533,13 @@ class CounterWidgets {
     required VoidCallback onCartUpdated,
   }) {
     final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-    final paymentController = TextEditingController(
-      text: 'Cash Paid by Customer',
-    );
+    final paymentController = TextEditingController();
     final paymentAmountController = TextEditingController();
     String paymentType = PaymentType.cashIn.value;
     paymentController.text = paymentType == PaymentType.cashIn.value
         ? 'Cash Paid by Customer'
         : 'Cash Paid to Customer';
+
     showModalBottomSheet<CartItem>(
       backgroundColor: Colors.grey.shade100,
       useSafeArea: true,
@@ -627,7 +584,8 @@ class CounterWidgets {
                               onTap: () => setModalState(() {
                                 paymentType = PaymentType.cashIn.value;
                                 paymentController.clear();
-                                paymentController.text = ' Paid by Customer';
+                                paymentController.text =
+                                    'Cash Paid by Customer';
                               }),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -658,7 +616,8 @@ class CounterWidgets {
                               onTap: () => setModalState(() {
                                 paymentType = PaymentType.cashOut.value;
                                 paymentController.clear();
-                                paymentController.text = ' Paid to Customer';
+                                paymentController.text =
+                                    'Cash Paid to Customer';
                               }),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
@@ -743,7 +702,6 @@ class CounterWidgets {
                         filled: true,
                         fillColor: Colors.grey.shade50,
                       ),
-
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter payment amount';
@@ -796,12 +754,10 @@ class CounterWidgets {
 
   Widget counterCard({
     required List<CartItem> cart,
-
     required VoidCallback onCartUpdated,
   }) {
     return ListView.builder(
-      padding: EdgeInsets.symmetric(horizontal: 10),
-
+      padding: const EdgeInsets.symmetric(horizontal: 10),
       itemCount: cart.length,
       itemBuilder: (context, index) {
         final item = cart[index];
@@ -832,10 +788,8 @@ class CounterWidgets {
           direction: DismissDirection.endToStart,
           onDismissed: (direction) {
             cart.removeAt(index);
-
             onCartUpdated();
           },
-
           background: Container(
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
@@ -844,7 +798,6 @@ class CounterWidgets {
               color: AppColors.dismissibleWidgetColor,
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: const Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -856,7 +809,6 @@ class CounterWidgets {
                     fontSize: 18,
                   ),
                 ),
-
                 SizedBox(width: 10),
                 Icon(
                   Icons.delete_forever_sharp,
@@ -868,11 +820,10 @@ class CounterWidgets {
           ),
           child: Card(
             elevation: 1,
-            margin: EdgeInsets.symmetric(vertical: 4),
+            margin: const EdgeInsets.symmetric(vertical: 4),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-
             child: ListTile(
               leading: CircleAvatar(
                 backgroundColor: isPositive
@@ -888,7 +839,6 @@ class CounterWidgets {
                   size: 18,
                 ),
               ),
-
               title: Text(
                 item.productName,
                 style: const TextStyle(
@@ -897,14 +847,14 @@ class CounterWidgets {
                 ),
               ),
               subtitle: Text(
-                '$typeLabel • Qty: ${item.quantity} x LKR ${item.unitPrice.toStringAsFixed(2)}',
+                '$typeLabel • Qty: ${item.quantity} x LKR ${_currencyFormat.format(item.unitPrice)}',
                 style: TextStyle(
                   fontSize: 12,
                   color: Colors.grey.shade600,
                 ),
               ),
               trailing: Text(
-                '${isPositive ? '+' : '-'} LKR ${(item.quantity * item.unitPrice).toStringAsFixed(2)}',
+                '${isPositive ? '+' : '-'} LKR ${_currencyFormat.format(item.quantity * item.unitPrice)}',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
@@ -936,7 +886,8 @@ class CounterWidgets {
         }
         final customer = snapshot.data!;
         final previousBalance = customer.currentBalance;
-        final finalBalance = previousBalance + cartTotal(cart: cart);
+        final netChange = cartTotal(cart: cart);
+        final finalBalance = previousBalance + netChange;
 
         return Container(
           padding: const EdgeInsets.all(18),
@@ -964,7 +915,7 @@ class CounterWidgets {
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   Text(
-                    'LKR ${previousBalance.toStringAsFixed(2)}',
+                    'LKR ${_currencyFormat.format(previousBalance)}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
@@ -984,11 +935,11 @@ class CounterWidgets {
                     style: TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                   Text(
-                    'LKR ${cartTotal(cart: cart).toStringAsFixed(2)}',
+                    'LKR ${_currencyFormat.format(netChange)}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: cartTotal(cart: cart) >= 0
+                      color: netChange >= 0
                           ? Colors.green.shade700
                           : Colors.red.shade700,
                     ),
@@ -1010,7 +961,7 @@ class CounterWidgets {
                     ),
                   ),
                   Text(
-                    'LKR ${finalBalance.toStringAsFixed(2)}',
+                    'LKR ${_currencyFormat.format(finalBalance)}',
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
@@ -1046,17 +997,14 @@ class CounterWidgets {
     );
   }
 
-  // CART TOTAL METHOD
   double cartTotal({required List<CartItem> cart}) {
     return cart.fold<double>(0.0, (sum, item) {
       final double itemTotal = item.unitPrice * item.quantity;
 
-      // Purchases and Cash In increase the net amount
       if (item.type == TransactionType.purchase.value ||
           item.type == PaymentType.cashIn.value) {
         return sum + itemTotal;
       } else {
-        // Sales and Cash Out reduce the balance
         return sum - itemTotal;
       }
     });
@@ -1097,13 +1045,11 @@ class CounterWidgets {
     priceController?.clear();
   }
 
-  // Complete Transaction Confirmation Dialog
   void showCheckoutDialog({
     required BuildContext context,
     required double totalFinalBalance,
     required CustomerData customer,
     required List<CartItem> cart,
-
     required int? selectedCustomer,
     required VoidCallback onCompleteCheckout,
   }) {
@@ -1123,11 +1069,9 @@ class CounterWidgets {
               children: [
                 Row(
                   children: [
-                    const Text(
-                      'Previous Balance: ',
-                    ),
+                    const Text('Previous Balance: '),
                     Text(
-                      'LKR. ${customer.currentBalance}',
+                      'LKR. ${_currencyFormat.format(customer.currentBalance)}',
                       style: TextStyle(
                         fontWeight: FontWeight.w500,
                         color: customer.currentBalance >= 0
@@ -1147,7 +1091,7 @@ class CounterWidgets {
                   style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
                 Text(
-                  'LKR. $totalFinalBalance',
+                  'LKR. ${_currencyFormat.format(totalFinalBalance)}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

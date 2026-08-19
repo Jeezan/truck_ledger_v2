@@ -18,11 +18,9 @@ class _CounterPageState extends State<CounterPage> {
   final TextEditingController _paymentAmountController =
       TextEditingController();
 
-  String _transactionType = TransactionType.sale.value;
-  String _paymentType = PaymentType.cashOut.value;
+  final String _transactionType = TransactionType.sale.value;
 
   int? _selectedCustomer;
-  int? _selectedProduct;
   final List<CartItem> _cart = [];
 
   final database = appDatabase;

@@ -281,8 +281,77 @@ class AppDatabase extends _$AppDatabase {
     );
   }
 
-  //  >>>>>>>>>>>>>>> End Of Inventory Database Logics <<<<<<<<<<<<<<<<<<
+  //  >>>>>>>>>>>>>>> Transaction Master Database Logics <<<<<<<<<<<<<<<<<<
 
+  Future<int> createTransactionMaster({
+    required int customerId,
+    required double totalAmount,
+  }) {
+    return into(transactionMaster).insert(
+      TransactionMasterCompanion.insert(
+        customerId: customerId,
+        totalAmount: totalAmount,
+      ),
+    );
+  }
+
+  Stream<List<TransactionMasterData>> watchCustomerTransactions({
+    required int customerId,
+  }) {
+    return (select(transactionMaster)
+          ..where((t) => t.customerId.equals(customerId))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .watch();
+  }
+
+  Future<TransactionMasterData?> getTransaction(int id) {
+    return (select(
+      transactionMaster,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<void> deleteTransactionMaster(int transactionId) async {
+    await transaction(() async {
+      // 1. Find transaction master record
+      final master = await (select(
+        transactionMaster,
+      )..where((t) => t.id.equals(transactionId))).getSingleOrNull();
+
+      if (master == null) return;
+
+      // 2. Revert Customer Balance
+      final customerData = await getCustomerById(master.customerId);
+      if (customerData != null) {
+        final double revertedBalance =
+            customerData.currentBalance - master.totalAmount;
+
+        await (update(
+          customer,
+        )..where((c) => c.id.equals(master.customerId))).write(
+          CustomerCompanion(currentBalance: Value(revertedBalance)),
+        );
+      }
+
+      // 3. Delete associated line items
+      await (delete(
+        transactionItem,
+      )..where((i) => i.transactionId.equals(transactionId))).go();
+
+      // 4. Delete transaction master
+      await (delete(
+        transactionMaster,
+      )..where((t) => t.id.equals(transactionId))).go();
+    });
+  }
+  //  >>>>>>>>>>>>>>> End Of Transaction Master Database Logics <<<<<<<<<<<<<<<<<<
+  //  >>>>>>>>>>>>>>> Transaction Items Logics <<<<<<<<<<<<<<<<<<
+
+  Stream<List<TransactionItemData>> watchTransactionItems(int transactionId) {
+    return (select(
+      transactionItem,
+    )..where((t) => t.transactionId.equals(transactionId))).watch();
+  }
+  //  >>>>>>>>>>>>>>> End Of Transaction Items Logics <<<<<<<<<<<<<<<<<<
   //  >>>>>>>>>>>>>>> Checkout Logic <<<<<<<<<<<<<<<<<<
 
   Future<void> completeCheckout({
