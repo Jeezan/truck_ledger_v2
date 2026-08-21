@@ -4,6 +4,7 @@ import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
 import 'package:truck_ledger_v2/pages/customer/edit_customer_page.dart';
+import 'package:truck_ledger_v2/services/firebase_sync_service.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 import 'package:truck_ledger_v2/widgets/customer_widgets.dart';
 
@@ -70,6 +71,12 @@ class CustomerDetailsPage extends StatelessWidget {
                 if (formKey.currentState!.validate()) {
                   Navigator.pop(dialogContext);
                   await database.deleteTransactionMaster(transactionId);
+                  await FirebaseSyncService().deleteTransactionFromCloud(
+                    transactionId,
+                  );
+                  await FirebaseSyncService().deleteTransactionItemFromCloud(
+                    transactionId,
+                  );
 
                   if (context.mounted) {
                     CustomWidgets().customSnackBar(

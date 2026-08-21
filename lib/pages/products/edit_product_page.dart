@@ -180,7 +180,6 @@ class _EditProductPageState extends State<EditProductPage> {
                           productName: newName,
                           unitPrice: newPrice,
                           transactionType: newType,
-                          isDeleted: false,
                         ),
                       );
 

@@ -60,6 +60,13 @@ class FirebaseSyncService {
         }, SetOptions(merge: true));
   }
 
+  Future<void> deleteTransactionItemFromCloud(int transactionId) async {
+    await _firestore
+        .collection('transactionItems')
+        .doc(transactionId.toString())
+        .delete();
+  }
+
   // Sync a single product
   Future<void> syncProduct(ProductData product) async {
     await _firestore.collection('products').doc(product.id.toString()).set({
@@ -95,6 +102,25 @@ class FirebaseSyncService {
         .delete();
   }
 
+  Future<void> syncCustomerLedger(CustomerLedgerData customerLedger) async {
+    await _firestore
+        .collection('customerLedger')
+        .doc(customerLedger.id.toString())
+        .set({
+          'id': customerLedger.id,
+          'customerId': customerLedger.customerId,
+          'productId': customerLedger.productId,
+          'transactionType': customerLedger.transactionType,
+          'quantity': customerLedger.quantity,
+          'unitPrice': customerLedger.unitPrice,
+          'creditAmount': customerLedger.createdAt,
+          'debitAmount': customerLedger.debitAmount,
+          'paymentAmount': customerLedger.paymentAmount,
+          'balance': customerLedger.balance,
+          'createdAt': customerLedger.createdAt,
+        });
+  }
+
   // Sync all local tables to Firestore concurrently
   Future<void> syncAllData(AppDatabase database) async {
     final customers = await database.select(database.customer).get();
@@ -106,6 +132,9 @@ class FirebaseSyncService {
         .get();
     final products = await database.select(database.product).get();
     final inventories = await database.select(database.inventory).get();
+    final customerLedgerEntries = await database
+        .select(database.customerLedger)
+        .get();
 
     await Future.wait([
       ...customers.map(syncCustomer),
@@ -113,6 +142,7 @@ class FirebaseSyncService {
       ...transactionItems.map(syncTransactionItem),
       ...products.map(syncProduct),
       ...inventories.map(syncInventory),
+      ...customerLedgerEntries.map(syncCustomerLedger),
     ]);
   }
 

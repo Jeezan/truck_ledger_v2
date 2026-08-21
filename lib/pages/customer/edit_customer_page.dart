@@ -193,7 +193,6 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                           customerPhoneNumber: newPhone,
                           customerAddress: newAddress,
                           currentBalance: widget.customerData.currentBalance,
-                          isDeleted: false,
                         ),
                       );
                       final changes = <String>[];

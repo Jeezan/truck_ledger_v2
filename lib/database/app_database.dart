@@ -10,7 +10,6 @@ class Product extends Table {
   TextColumn get productName => text().withLength(max: 40)();
   RealColumn get unitPrice => real()();
   TextColumn get transactionType => text()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class Customer extends Table {
@@ -19,7 +18,6 @@ class Customer extends Table {
   TextColumn get customerPhoneNumber => text().withLength(min: 10, max: 15)();
   TextColumn get customerAddress => text().nullable()();
   RealColumn get currentBalance => real().withDefault(const Constant(0.0))();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class Inventory extends Table {
@@ -29,7 +27,6 @@ class Inventory extends Table {
   RealColumn get customPrice => real().nullable()();
   IntColumn get quantity => integer()();
   TextColumn get tranctionType => text()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class TransactionMaster extends Table {
@@ -37,24 +34,20 @@ class TransactionMaster extends Table {
   IntColumn get customerId => integer().references(Customer, #id)();
   RealColumn get totalAmount => real()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class TransactionItem extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get transactionId => integer().references(TransactionMaster, #id)();
-  // Nullable so deleting the master product won't delete historical records
   IntColumn get productId => integer().nullable().references(
     Product,
     #id,
     onDelete: KeyAction.setNull,
   )();
-  // Historical snapshots (frozen at the moment of checkout)
   TextColumn get productName => text()();
   RealColumn get unitPrice => real()();
   IntColumn get quantity => integer()();
   TextColumn get type => text()();
-  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class CustomerLedger extends Table {
@@ -85,7 +78,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'ledger_database_II'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   //  >>>>>>>>>>>>>>> Products Database Logics <<<<<<<<<<<<<<<<<<
 
@@ -104,9 +97,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> deleteProduct(int id) {
-    return (update(product)..where((p) => p.id.equals(id))).write(
-      const ProductCompanion(isDeleted: Value(true)),
-    );
+    return (delete(product)..where((p) => p.id.equals(id))).go();
   }
 
   Future<bool> updateProduct(ProductData item) {
@@ -114,7 +105,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<ProductData>> watchAllProducts() {
-    return (select(product)..where((p) => p.isDeleted.equals(false))).watch();
+    return select(product).watch();
   }
 
   //  >>>>>>>>>>>>>>> End Of Products Database Logics <<<<<<<<<<<<<<<<<<
@@ -136,19 +127,17 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<CustomerData?> getCustomerById(int id) {
-    return (select(customer)
-          ..where((c) => c.id.equals(id) & c.isDeleted.equals(false)))
-        .getSingleOrNull();
+    return (select(customer)..where((c) => c.id.equals(id))).getSingleOrNull();
   }
 
   Stream<List<CustomerData>> watchAllCustomers() {
-    return (select(customer)..where((c) => c.isDeleted.equals(false))).watch();
+    return select(customer).watch();
   }
 
   Stream<CustomerData?> watchCustomer(int id) {
-    return (select(customer)
-          ..where((c) => c.id.equals(id) & c.isDeleted.equals(false)))
-        .watchSingleOrNull();
+    return (select(
+      customer,
+    )..where((c) => c.id.equals(id))).watchSingleOrNull();
   }
 
   Future<bool> updateCustomerInfo(CustomerData updatedCustomer) {
@@ -156,9 +145,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> deleteCustomer(int id) {
-    return (update(customer)..where((c) => c.id.equals(id))).write(
-      const CustomerCompanion(isDeleted: Value(true)),
-    );
+    return (delete(customer)..where((c) => c.id.equals(id))).go();
   }
 
   //  >>>>>>>>>>>>>>> End Of Customer Database Logics <<<<<<<<<<<<<<<<<<
@@ -195,13 +182,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<InventoryData>> watchAllInventory() {
-    return (select(inventory)..where((i) => i.isDeleted.equals(false))).watch();
+    return select(inventory).watch();
   }
 
   Stream<List<InventoryItemWithProduct>> watchInventoryWithProducts() {
     final query = select(inventory).join([
       leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
-    ])..where(inventory.isDeleted.equals(false));
+    ]);
 
     return query.watch().map(
       (rows) {
@@ -241,23 +228,19 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<InventoryData?> getInventoryByProductId(int productId) {
-    return (select(inventory)..where(
-          (i) => i.productId.equals(productId) & i.isDeleted.equals(false),
-        ))
-        .getSingleOrNull();
+    return (select(
+      inventory,
+    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
   }
 
   Future<int> deleteInventory(int id) {
-    return (update(inventory)..where((i) => i.id.equals(id))).write(
-      const InventoryCompanion(isDeleted: Value(true)),
-    );
+    return (delete(inventory)..where((i) => i.id.equals(id))).go();
   }
 
   Future<InventoryData?> findInventoryByProductId(int productId) {
-    return (select(inventory)..where(
-          (i) => i.productId.equals(productId) & i.isDeleted.equals(false),
-        ))
-        .getSingleOrNull();
+    return (select(
+      inventory,
+    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
   }
 
   Future<InventoryData?> findInventoryByCustomNamePrice(
@@ -268,8 +251,7 @@ class AppDatabase extends _$AppDatabase {
           ..where(
             (i) =>
                 i.customName.lower().equals(customName.toLowerCase()) &
-                i.customPrice.equals(customPrice) &
-                i.isDeleted.equals(false),
+                i.customPrice.equals(customPrice),
           )
           ..limit(1))
         .getSingleOrNull();
@@ -278,13 +260,9 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<InventoryItemWithProduct>> watchInventoryWithProductsByType(
     String type,
   ) {
-    final query =
-        select(inventory).join([
-          leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
-        ])..where(
-          inventory.tranctionType.equals(type) &
-              inventory.isDeleted.equals(false),
-        );
+    final query = select(inventory).join([
+      leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
+    ])..where(inventory.tranctionType.equals(type));
 
     return query.watch().map(
       (rows) {
@@ -318,29 +296,25 @@ class AppDatabase extends _$AppDatabase {
     required int customerId,
   }) {
     return (select(transactionMaster)
-          ..where(
-            (t) => t.customerId.equals(customerId) & t.isDeleted.equals(false),
-          )
+          ..where((t) => t.customerId.equals(customerId))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
   }
 
   Future<TransactionMasterData?> getTransaction(int id) {
-    return (select(transactionMaster)
-          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
-        .getSingleOrNull();
+    return (select(
+      transactionMaster,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   Future<void> deleteTransactionMaster(int transactionId) async {
     await transaction(() async {
-      // 1. Find transaction master record
       final master = await (select(
         transactionMaster,
       )..where((t) => t.id.equals(transactionId))).getSingleOrNull();
 
       if (master == null) return;
 
-      // 2. Revert Customer Balance
       final customerData = await getCustomerById(master.customerId);
       if (customerData != null) {
         final double revertedBalance =
@@ -353,28 +327,23 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
-      // 3. Soft delete associated line items
-      await (update(transactionItem)
-            ..where((i) => i.transactionId.equals(transactionId)))
-          .write(const TransactionItemCompanion(isDeleted: Value(true)));
-
-      // 4. Soft delete transaction master
-      await (update(transactionMaster)
-            ..where((t) => t.id.equals(transactionId)))
-          .write(const TransactionMasterCompanion(isDeleted: Value(true)));
+      await (delete(
+        transactionItem,
+      )..where((i) => i.transactionId.equals(transactionId))).go();
+      await (delete(
+        transactionMaster,
+      )..where((t) => t.id.equals(transactionId))).go();
     });
   }
-  //  >>>>>>>>>>>>>>> End Of Transaction Master Database Logics <<<<<<<<<<<<<<<<<<
+
   //  >>>>>>>>>>>>>>> Transaction Items Logics <<<<<<<<<<<<<<<<<<
 
   Stream<List<TransactionItemData>> watchTransactionItems(int transactionId) {
-    return (select(transactionItem)..where(
-          (t) =>
-              t.transactionId.equals(transactionId) & t.isDeleted.equals(false),
-        ))
-        .watch();
+    return (select(
+      transactionItem,
+    )..where((t) => t.transactionId.equals(transactionId))).watch();
   }
-  //  >>>>>>>>>>>>>>> End Of Transaction Items Logics <<<<<<<<<<<<<<<<<<
+
   //  >>>>>>>>>>>>>>> Checkout Logic <<<<<<<<<<<<<<<<<<
 
   Future<void> completeCheckout({
@@ -383,7 +352,6 @@ class AppDatabase extends _$AppDatabase {
     required List<CartItem> cartItems,
   }) async {
     await transaction(() async {
-      // 1. Create Transaction Master
       final masterId = await into(transactionMaster).insert(
         TransactionMasterCompanion.insert(
           customerId: customerId,
@@ -391,11 +359,9 @@ class AppDatabase extends _$AppDatabase {
         ),
       );
 
-      // Fetch Customer Data safely without streams inside transaction
       final customerData = await getCustomerById(customerId);
       double runningBalance = customerData?.currentBalance ?? 0.0;
 
-      // 2. Process each cart item
       for (var item in cartItems) {
         await into(transactionItem).insert(
           TransactionItemCompanion.insert(
@@ -420,7 +386,6 @@ class AppDatabase extends _$AppDatabase {
           runningBalance -= itemTotal;
         }
 
-        // Insert into CustomerLedger
         await into(customerLedger).insert(
           CustomerLedgerCompanion.insert(
             customerId: customerId,
@@ -434,12 +399,10 @@ class AppDatabase extends _$AppDatabase {
           ),
         );
 
-        // SKIP INVENTORY UPDATE FOR CASH
         if (item.isPayment || item.productId == null) {
           continue;
         }
 
-        // 3. Update Inventory
         final existingInventory = await getInventoryByProductId(
           item.productId!,
         );
@@ -462,7 +425,6 @@ class AppDatabase extends _$AppDatabase {
         }
       }
 
-      // 4. Update Customer Balance
       if (customerData != null) {
         await (update(customer)..where((c) => c.id.equals(customerId))).write(
           CustomerCompanion(currentBalance: Value(runningBalance)),
@@ -472,17 +434,15 @@ class AppDatabase extends _$AppDatabase {
   }
 }
 
-// Class for the Inventory and Product
 class InventoryItemWithProduct {
   final InventoryData inventory;
   final ProductData? product;
 
   InventoryItemWithProduct({required this.inventory, this.product});
-  // Retrieves custom name if custom item, otherwise falls back to catalog product name
+
   String get displayName =>
       inventory.customName ?? product?.productName ?? 'Unknown Item';
 
-  // Retrieves custom price if custom item, otherwise falls back to catalog unit price
   double get displayPrice => inventory.customPrice ?? product?.unitPrice ?? 0.0;
 }
 

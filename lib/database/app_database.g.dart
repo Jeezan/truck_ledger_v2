@@ -55,28 +55,12 @@ class $ProductTable extends Product with TableInfo<$ProductTable, ProductData> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     productName,
     unitPrice,
     transactionType,
-    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -123,12 +107,6 @@ class $ProductTable extends Product with TableInfo<$ProductTable, ProductData> {
     } else if (isInserting) {
       context.missing(_transactionTypeMeta);
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
     return context;
   }
 
@@ -154,10 +132,6 @@ class $ProductTable extends Product with TableInfo<$ProductTable, ProductData> {
         DriftSqlType.string,
         data['${effectivePrefix}transaction_type'],
       )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
     );
   }
 
@@ -172,13 +146,11 @@ class ProductData extends DataClass implements Insertable<ProductData> {
   final String productName;
   final double unitPrice;
   final String transactionType;
-  final bool isDeleted;
   const ProductData({
     required this.id,
     required this.productName,
     required this.unitPrice,
     required this.transactionType,
-    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -187,7 +159,6 @@ class ProductData extends DataClass implements Insertable<ProductData> {
     map['product_name'] = Variable<String>(productName);
     map['unit_price'] = Variable<double>(unitPrice);
     map['transaction_type'] = Variable<String>(transactionType);
-    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -197,7 +168,6 @@ class ProductData extends DataClass implements Insertable<ProductData> {
       productName: Value(productName),
       unitPrice: Value(unitPrice),
       transactionType: Value(transactionType),
-      isDeleted: Value(isDeleted),
     );
   }
 
@@ -211,7 +181,6 @@ class ProductData extends DataClass implements Insertable<ProductData> {
       productName: serializer.fromJson<String>(json['productName']),
       unitPrice: serializer.fromJson<double>(json['unitPrice']),
       transactionType: serializer.fromJson<String>(json['transactionType']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -222,7 +191,6 @@ class ProductData extends DataClass implements Insertable<ProductData> {
       'productName': serializer.toJson<String>(productName),
       'unitPrice': serializer.toJson<double>(unitPrice),
       'transactionType': serializer.toJson<String>(transactionType),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -231,13 +199,11 @@ class ProductData extends DataClass implements Insertable<ProductData> {
     String? productName,
     double? unitPrice,
     String? transactionType,
-    bool? isDeleted,
   }) => ProductData(
     id: id ?? this.id,
     productName: productName ?? this.productName,
     unitPrice: unitPrice ?? this.unitPrice,
     transactionType: transactionType ?? this.transactionType,
-    isDeleted: isDeleted ?? this.isDeleted,
   );
   ProductData copyWithCompanion(ProductCompanion data) {
     return ProductData(
@@ -249,7 +215,6 @@ class ProductData extends DataClass implements Insertable<ProductData> {
       transactionType: data.transactionType.present
           ? data.transactionType.value
           : this.transactionType,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -259,15 +224,13 @@ class ProductData extends DataClass implements Insertable<ProductData> {
           ..write('id: $id, ')
           ..write('productName: $productName, ')
           ..write('unitPrice: $unitPrice, ')
-          ..write('transactionType: $transactionType, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('transactionType: $transactionType')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, productName, unitPrice, transactionType, isDeleted);
+  int get hashCode => Object.hash(id, productName, unitPrice, transactionType);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -275,8 +238,7 @@ class ProductData extends DataClass implements Insertable<ProductData> {
           other.id == this.id &&
           other.productName == this.productName &&
           other.unitPrice == this.unitPrice &&
-          other.transactionType == this.transactionType &&
-          other.isDeleted == this.isDeleted);
+          other.transactionType == this.transactionType);
 }
 
 class ProductCompanion extends UpdateCompanion<ProductData> {
@@ -284,20 +246,17 @@ class ProductCompanion extends UpdateCompanion<ProductData> {
   final Value<String> productName;
   final Value<double> unitPrice;
   final Value<String> transactionType;
-  final Value<bool> isDeleted;
   const ProductCompanion({
     this.id = const Value.absent(),
     this.productName = const Value.absent(),
     this.unitPrice = const Value.absent(),
     this.transactionType = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   });
   ProductCompanion.insert({
     this.id = const Value.absent(),
     required String productName,
     required double unitPrice,
     required String transactionType,
-    this.isDeleted = const Value.absent(),
   }) : productName = Value(productName),
        unitPrice = Value(unitPrice),
        transactionType = Value(transactionType);
@@ -306,14 +265,12 @@ class ProductCompanion extends UpdateCompanion<ProductData> {
     Expression<String>? productName,
     Expression<double>? unitPrice,
     Expression<String>? transactionType,
-    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (productName != null) 'product_name': productName,
       if (unitPrice != null) 'unit_price': unitPrice,
       if (transactionType != null) 'transaction_type': transactionType,
-      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -322,14 +279,12 @@ class ProductCompanion extends UpdateCompanion<ProductData> {
     Value<String>? productName,
     Value<double>? unitPrice,
     Value<String>? transactionType,
-    Value<bool>? isDeleted,
   }) {
     return ProductCompanion(
       id: id ?? this.id,
       productName: productName ?? this.productName,
       unitPrice: unitPrice ?? this.unitPrice,
       transactionType: transactionType ?? this.transactionType,
-      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -348,9 +303,6 @@ class ProductCompanion extends UpdateCompanion<ProductData> {
     if (transactionType.present) {
       map['transaction_type'] = Variable<String>(transactionType.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
     return map;
   }
 
@@ -360,8 +312,7 @@ class ProductCompanion extends UpdateCompanion<ProductData> {
           ..write('id: $id, ')
           ..write('productName: $productName, ')
           ..write('unitPrice: $unitPrice, ')
-          ..write('transactionType: $transactionType, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('transactionType: $transactionType')
           ..write(')'))
         .toString();
   }
@@ -436,21 +387,6 @@ class $CustomerTable extends Customer
     requiredDuringInsert: false,
     defaultValue: const Constant(0.0),
   );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -458,7 +394,6 @@ class $CustomerTable extends Customer
     customerPhoneNumber,
     customerAddress,
     currentBalance,
-    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -515,12 +450,6 @@ class $CustomerTable extends Customer
         ),
       );
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
     return context;
   }
 
@@ -550,10 +479,6 @@ class $CustomerTable extends Customer
         DriftSqlType.double,
         data['${effectivePrefix}current_balance'],
       )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
     );
   }
 
@@ -569,14 +494,12 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
   final String customerPhoneNumber;
   final String? customerAddress;
   final double currentBalance;
-  final bool isDeleted;
   const CustomerData({
     required this.id,
     required this.customerName,
     required this.customerPhoneNumber,
     this.customerAddress,
     required this.currentBalance,
-    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -588,7 +511,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
       map['customer_address'] = Variable<String>(customerAddress);
     }
     map['current_balance'] = Variable<double>(currentBalance);
-    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -601,7 +523,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
           ? const Value.absent()
           : Value(customerAddress),
       currentBalance: Value(currentBalance),
-      isDeleted: Value(isDeleted),
     );
   }
 
@@ -618,7 +539,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
       ),
       customerAddress: serializer.fromJson<String?>(json['customerAddress']),
       currentBalance: serializer.fromJson<double>(json['currentBalance']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -630,7 +550,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
       'customerPhoneNumber': serializer.toJson<String>(customerPhoneNumber),
       'customerAddress': serializer.toJson<String?>(customerAddress),
       'currentBalance': serializer.toJson<double>(currentBalance),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -640,7 +559,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
     String? customerPhoneNumber,
     Value<String?> customerAddress = const Value.absent(),
     double? currentBalance,
-    bool? isDeleted,
   }) => CustomerData(
     id: id ?? this.id,
     customerName: customerName ?? this.customerName,
@@ -649,7 +567,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
         ? customerAddress.value
         : this.customerAddress,
     currentBalance: currentBalance ?? this.currentBalance,
-    isDeleted: isDeleted ?? this.isDeleted,
   );
   CustomerData copyWithCompanion(CustomerCompanion data) {
     return CustomerData(
@@ -666,7 +583,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
       currentBalance: data.currentBalance.present
           ? data.currentBalance.value
           : this.currentBalance,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -677,8 +593,7 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
           ..write('customerName: $customerName, ')
           ..write('customerPhoneNumber: $customerPhoneNumber, ')
           ..write('customerAddress: $customerAddress, ')
-          ..write('currentBalance: $currentBalance, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('currentBalance: $currentBalance')
           ..write(')'))
         .toString();
   }
@@ -690,7 +605,6 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
     customerPhoneNumber,
     customerAddress,
     currentBalance,
-    isDeleted,
   );
   @override
   bool operator ==(Object other) =>
@@ -700,8 +614,7 @@ class CustomerData extends DataClass implements Insertable<CustomerData> {
           other.customerName == this.customerName &&
           other.customerPhoneNumber == this.customerPhoneNumber &&
           other.customerAddress == this.customerAddress &&
-          other.currentBalance == this.currentBalance &&
-          other.isDeleted == this.isDeleted);
+          other.currentBalance == this.currentBalance);
 }
 
 class CustomerCompanion extends UpdateCompanion<CustomerData> {
@@ -710,14 +623,12 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
   final Value<String> customerPhoneNumber;
   final Value<String?> customerAddress;
   final Value<double> currentBalance;
-  final Value<bool> isDeleted;
   const CustomerCompanion({
     this.id = const Value.absent(),
     this.customerName = const Value.absent(),
     this.customerPhoneNumber = const Value.absent(),
     this.customerAddress = const Value.absent(),
     this.currentBalance = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   });
   CustomerCompanion.insert({
     this.id = const Value.absent(),
@@ -725,7 +636,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
     required String customerPhoneNumber,
     this.customerAddress = const Value.absent(),
     this.currentBalance = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   }) : customerName = Value(customerName),
        customerPhoneNumber = Value(customerPhoneNumber);
   static Insertable<CustomerData> custom({
@@ -734,7 +644,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
     Expression<String>? customerPhoneNumber,
     Expression<String>? customerAddress,
     Expression<double>? currentBalance,
-    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -743,7 +652,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
         'customer_phone_number': customerPhoneNumber,
       if (customerAddress != null) 'customer_address': customerAddress,
       if (currentBalance != null) 'current_balance': currentBalance,
-      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -753,7 +661,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
     Value<String>? customerPhoneNumber,
     Value<String?>? customerAddress,
     Value<double>? currentBalance,
-    Value<bool>? isDeleted,
   }) {
     return CustomerCompanion(
       id: id ?? this.id,
@@ -761,7 +668,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
       customerPhoneNumber: customerPhoneNumber ?? this.customerPhoneNumber,
       customerAddress: customerAddress ?? this.customerAddress,
       currentBalance: currentBalance ?? this.currentBalance,
-      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -785,9 +691,6 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
     if (currentBalance.present) {
       map['current_balance'] = Variable<double>(currentBalance.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
     return map;
   }
 
@@ -798,8 +701,7 @@ class CustomerCompanion extends UpdateCompanion<CustomerData> {
           ..write('customerName: $customerName, ')
           ..write('customerPhoneNumber: $customerPhoneNumber, ')
           ..write('customerAddress: $customerAddress, ')
-          ..write('currentBalance: $currentBalance, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('currentBalance: $currentBalance')
           ..write(')'))
         .toString();
   }
@@ -882,21 +784,6 @@ class $InventoryTable extends Inventory
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -905,7 +792,6 @@ class $InventoryTable extends Inventory
     customPrice,
     quantity,
     tranctionType,
-    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -962,12 +848,6 @@ class $InventoryTable extends Inventory
     } else if (isInserting) {
       context.missing(_tranctionTypeMeta);
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
     return context;
   }
 
@@ -1001,10 +881,6 @@ class $InventoryTable extends Inventory
         DriftSqlType.string,
         data['${effectivePrefix}tranction_type'],
       )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
     );
   }
 
@@ -1021,7 +897,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
   final double? customPrice;
   final int quantity;
   final String tranctionType;
-  final bool isDeleted;
   const InventoryData({
     required this.id,
     this.productId,
@@ -1029,7 +904,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
     this.customPrice,
     required this.quantity,
     required this.tranctionType,
-    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1046,7 +920,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
     }
     map['quantity'] = Variable<int>(quantity);
     map['tranction_type'] = Variable<String>(tranctionType);
-    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -1064,7 +937,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
           : Value(customPrice),
       quantity: Value(quantity),
       tranctionType: Value(tranctionType),
-      isDeleted: Value(isDeleted),
     );
   }
 
@@ -1080,7 +952,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
       customPrice: serializer.fromJson<double?>(json['customPrice']),
       quantity: serializer.fromJson<int>(json['quantity']),
       tranctionType: serializer.fromJson<String>(json['tranctionType']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -1093,7 +964,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
       'customPrice': serializer.toJson<double?>(customPrice),
       'quantity': serializer.toJson<int>(quantity),
       'tranctionType': serializer.toJson<String>(tranctionType),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -1104,7 +974,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
     Value<double?> customPrice = const Value.absent(),
     int? quantity,
     String? tranctionType,
-    bool? isDeleted,
   }) => InventoryData(
     id: id ?? this.id,
     productId: productId.present ? productId.value : this.productId,
@@ -1112,7 +981,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
     customPrice: customPrice.present ? customPrice.value : this.customPrice,
     quantity: quantity ?? this.quantity,
     tranctionType: tranctionType ?? this.tranctionType,
-    isDeleted: isDeleted ?? this.isDeleted,
   );
   InventoryData copyWithCompanion(InventoryCompanion data) {
     return InventoryData(
@@ -1128,7 +996,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
       tranctionType: data.tranctionType.present
           ? data.tranctionType.value
           : this.tranctionType,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -1140,8 +1007,7 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
           ..write('customName: $customName, ')
           ..write('customPrice: $customPrice, ')
           ..write('quantity: $quantity, ')
-          ..write('tranctionType: $tranctionType, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('tranctionType: $tranctionType')
           ..write(')'))
         .toString();
   }
@@ -1154,7 +1020,6 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
     customPrice,
     quantity,
     tranctionType,
-    isDeleted,
   );
   @override
   bool operator ==(Object other) =>
@@ -1165,8 +1030,7 @@ class InventoryData extends DataClass implements Insertable<InventoryData> {
           other.customName == this.customName &&
           other.customPrice == this.customPrice &&
           other.quantity == this.quantity &&
-          other.tranctionType == this.tranctionType &&
-          other.isDeleted == this.isDeleted);
+          other.tranctionType == this.tranctionType);
 }
 
 class InventoryCompanion extends UpdateCompanion<InventoryData> {
@@ -1176,7 +1040,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
   final Value<double?> customPrice;
   final Value<int> quantity;
   final Value<String> tranctionType;
-  final Value<bool> isDeleted;
   const InventoryCompanion({
     this.id = const Value.absent(),
     this.productId = const Value.absent(),
@@ -1184,7 +1047,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
     this.customPrice = const Value.absent(),
     this.quantity = const Value.absent(),
     this.tranctionType = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   });
   InventoryCompanion.insert({
     this.id = const Value.absent(),
@@ -1193,7 +1055,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
     this.customPrice = const Value.absent(),
     required int quantity,
     required String tranctionType,
-    this.isDeleted = const Value.absent(),
   }) : quantity = Value(quantity),
        tranctionType = Value(tranctionType);
   static Insertable<InventoryData> custom({
@@ -1203,7 +1064,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
     Expression<double>? customPrice,
     Expression<int>? quantity,
     Expression<String>? tranctionType,
-    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1212,7 +1072,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
       if (customPrice != null) 'custom_price': customPrice,
       if (quantity != null) 'quantity': quantity,
       if (tranctionType != null) 'tranction_type': tranctionType,
-      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -1223,7 +1082,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
     Value<double?>? customPrice,
     Value<int>? quantity,
     Value<String>? tranctionType,
-    Value<bool>? isDeleted,
   }) {
     return InventoryCompanion(
       id: id ?? this.id,
@@ -1232,7 +1090,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
       customPrice: customPrice ?? this.customPrice,
       quantity: quantity ?? this.quantity,
       tranctionType: tranctionType ?? this.tranctionType,
-      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -1257,9 +1114,6 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
     if (tranctionType.present) {
       map['tranction_type'] = Variable<String>(tranctionType.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
     return map;
   }
 
@@ -1271,8 +1125,7 @@ class InventoryCompanion extends UpdateCompanion<InventoryData> {
           ..write('customName: $customName, ')
           ..write('customPrice: $customPrice, ')
           ..write('quantity: $quantity, ')
-          ..write('tranctionType: $tranctionType, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('tranctionType: $tranctionType')
           ..write(')'))
         .toString();
   }
@@ -1334,28 +1187,12 @@ class $TransactionMasterTable extends TransactionMaster
     requiredDuringInsert: false,
     defaultValue: currentDateAndTime,
   );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
     customerId,
     totalAmount,
     createdAt,
-    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1397,12 +1234,6 @@ class $TransactionMasterTable extends TransactionMaster
         createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
       );
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
     return context;
   }
 
@@ -1428,10 +1259,6 @@ class $TransactionMasterTable extends TransactionMaster
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
       )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
     );
   }
 
@@ -1447,13 +1274,11 @@ class TransactionMasterData extends DataClass
   final int customerId;
   final double totalAmount;
   final DateTime createdAt;
-  final bool isDeleted;
   const TransactionMasterData({
     required this.id,
     required this.customerId,
     required this.totalAmount,
     required this.createdAt,
-    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1462,7 +1287,6 @@ class TransactionMasterData extends DataClass
     map['customer_id'] = Variable<int>(customerId);
     map['total_amount'] = Variable<double>(totalAmount);
     map['created_at'] = Variable<DateTime>(createdAt);
-    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -1472,7 +1296,6 @@ class TransactionMasterData extends DataClass
       customerId: Value(customerId),
       totalAmount: Value(totalAmount),
       createdAt: Value(createdAt),
-      isDeleted: Value(isDeleted),
     );
   }
 
@@ -1486,7 +1309,6 @@ class TransactionMasterData extends DataClass
       customerId: serializer.fromJson<int>(json['customerId']),
       totalAmount: serializer.fromJson<double>(json['totalAmount']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -1497,7 +1319,6 @@ class TransactionMasterData extends DataClass
       'customerId': serializer.toJson<int>(customerId),
       'totalAmount': serializer.toJson<double>(totalAmount),
       'createdAt': serializer.toJson<DateTime>(createdAt),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -1506,13 +1327,11 @@ class TransactionMasterData extends DataClass
     int? customerId,
     double? totalAmount,
     DateTime? createdAt,
-    bool? isDeleted,
   }) => TransactionMasterData(
     id: id ?? this.id,
     customerId: customerId ?? this.customerId,
     totalAmount: totalAmount ?? this.totalAmount,
     createdAt: createdAt ?? this.createdAt,
-    isDeleted: isDeleted ?? this.isDeleted,
   );
   TransactionMasterData copyWithCompanion(TransactionMasterCompanion data) {
     return TransactionMasterData(
@@ -1524,7 +1343,6 @@ class TransactionMasterData extends DataClass
           ? data.totalAmount.value
           : this.totalAmount,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -1534,15 +1352,13 @@ class TransactionMasterData extends DataClass
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
           ..write('totalAmount: $totalAmount, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, customerId, totalAmount, createdAt, isDeleted);
+  int get hashCode => Object.hash(id, customerId, totalAmount, createdAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1550,8 +1366,7 @@ class TransactionMasterData extends DataClass
           other.id == this.id &&
           other.customerId == this.customerId &&
           other.totalAmount == this.totalAmount &&
-          other.createdAt == this.createdAt &&
-          other.isDeleted == this.isDeleted);
+          other.createdAt == this.createdAt);
 }
 
 class TransactionMasterCompanion
@@ -1560,20 +1375,17 @@ class TransactionMasterCompanion
   final Value<int> customerId;
   final Value<double> totalAmount;
   final Value<DateTime> createdAt;
-  final Value<bool> isDeleted;
   const TransactionMasterCompanion({
     this.id = const Value.absent(),
     this.customerId = const Value.absent(),
     this.totalAmount = const Value.absent(),
     this.createdAt = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   });
   TransactionMasterCompanion.insert({
     this.id = const Value.absent(),
     required int customerId,
     required double totalAmount,
     this.createdAt = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   }) : customerId = Value(customerId),
        totalAmount = Value(totalAmount);
   static Insertable<TransactionMasterData> custom({
@@ -1581,14 +1393,12 @@ class TransactionMasterCompanion
     Expression<int>? customerId,
     Expression<double>? totalAmount,
     Expression<DateTime>? createdAt,
-    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (customerId != null) 'customer_id': customerId,
       if (totalAmount != null) 'total_amount': totalAmount,
       if (createdAt != null) 'created_at': createdAt,
-      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -1597,14 +1407,12 @@ class TransactionMasterCompanion
     Value<int>? customerId,
     Value<double>? totalAmount,
     Value<DateTime>? createdAt,
-    Value<bool>? isDeleted,
   }) {
     return TransactionMasterCompanion(
       id: id ?? this.id,
       customerId: customerId ?? this.customerId,
       totalAmount: totalAmount ?? this.totalAmount,
       createdAt: createdAt ?? this.createdAt,
-      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -1623,9 +1431,6 @@ class TransactionMasterCompanion
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
     return map;
   }
 
@@ -1635,8 +1440,7 @@ class TransactionMasterCompanion
           ..write('id: $id, ')
           ..write('customerId: $customerId, ')
           ..write('totalAmount: $totalAmount, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('createdAt: $createdAt')
           ..write(')'))
         .toString();
   }
@@ -1731,21 +1535,6 @@ class $TransactionItemTable extends TransactionItem
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _isDeletedMeta = const VerificationMeta(
-    'isDeleted',
-  );
-  @override
-  late final GeneratedColumn<bool> isDeleted = GeneratedColumn<bool>(
-    'is_deleted',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_deleted" IN (0, 1))',
-    ),
-    defaultValue: const Constant(false),
-  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1755,7 +1544,6 @@ class $TransactionItemTable extends TransactionItem
     unitPrice,
     quantity,
     type,
-    isDeleted,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1824,12 +1612,6 @@ class $TransactionItemTable extends TransactionItem
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
-    if (data.containsKey('is_deleted')) {
-      context.handle(
-        _isDeletedMeta,
-        isDeleted.isAcceptableOrUnknown(data['is_deleted']!, _isDeletedMeta),
-      );
-    }
     return context;
   }
 
@@ -1867,10 +1649,6 @@ class $TransactionItemTable extends TransactionItem
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
-      isDeleted: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_deleted'],
-      )!,
     );
   }
 
@@ -1889,7 +1667,6 @@ class TransactionItemData extends DataClass
   final double unitPrice;
   final int quantity;
   final String type;
-  final bool isDeleted;
   const TransactionItemData({
     required this.id,
     required this.transactionId,
@@ -1898,7 +1675,6 @@ class TransactionItemData extends DataClass
     required this.unitPrice,
     required this.quantity,
     required this.type,
-    required this.isDeleted,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1912,7 +1688,6 @@ class TransactionItemData extends DataClass
     map['unit_price'] = Variable<double>(unitPrice);
     map['quantity'] = Variable<int>(quantity);
     map['type'] = Variable<String>(type);
-    map['is_deleted'] = Variable<bool>(isDeleted);
     return map;
   }
 
@@ -1927,7 +1702,6 @@ class TransactionItemData extends DataClass
       unitPrice: Value(unitPrice),
       quantity: Value(quantity),
       type: Value(type),
-      isDeleted: Value(isDeleted),
     );
   }
 
@@ -1944,7 +1718,6 @@ class TransactionItemData extends DataClass
       unitPrice: serializer.fromJson<double>(json['unitPrice']),
       quantity: serializer.fromJson<int>(json['quantity']),
       type: serializer.fromJson<String>(json['type']),
-      isDeleted: serializer.fromJson<bool>(json['isDeleted']),
     );
   }
   @override
@@ -1958,7 +1731,6 @@ class TransactionItemData extends DataClass
       'unitPrice': serializer.toJson<double>(unitPrice),
       'quantity': serializer.toJson<int>(quantity),
       'type': serializer.toJson<String>(type),
-      'isDeleted': serializer.toJson<bool>(isDeleted),
     };
   }
 
@@ -1970,7 +1742,6 @@ class TransactionItemData extends DataClass
     double? unitPrice,
     int? quantity,
     String? type,
-    bool? isDeleted,
   }) => TransactionItemData(
     id: id ?? this.id,
     transactionId: transactionId ?? this.transactionId,
@@ -1979,7 +1750,6 @@ class TransactionItemData extends DataClass
     unitPrice: unitPrice ?? this.unitPrice,
     quantity: quantity ?? this.quantity,
     type: type ?? this.type,
-    isDeleted: isDeleted ?? this.isDeleted,
   );
   TransactionItemData copyWithCompanion(TransactionItemCompanion data) {
     return TransactionItemData(
@@ -1994,7 +1764,6 @@ class TransactionItemData extends DataClass
       unitPrice: data.unitPrice.present ? data.unitPrice.value : this.unitPrice,
       quantity: data.quantity.present ? data.quantity.value : this.quantity,
       type: data.type.present ? data.type.value : this.type,
-      isDeleted: data.isDeleted.present ? data.isDeleted.value : this.isDeleted,
     );
   }
 
@@ -2007,8 +1776,7 @@ class TransactionItemData extends DataClass
           ..write('productName: $productName, ')
           ..write('unitPrice: $unitPrice, ')
           ..write('quantity: $quantity, ')
-          ..write('type: $type, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('type: $type')
           ..write(')'))
         .toString();
   }
@@ -2022,7 +1790,6 @@ class TransactionItemData extends DataClass
     unitPrice,
     quantity,
     type,
-    isDeleted,
   );
   @override
   bool operator ==(Object other) =>
@@ -2034,8 +1801,7 @@ class TransactionItemData extends DataClass
           other.productName == this.productName &&
           other.unitPrice == this.unitPrice &&
           other.quantity == this.quantity &&
-          other.type == this.type &&
-          other.isDeleted == this.isDeleted);
+          other.type == this.type);
 }
 
 class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
@@ -2046,7 +1812,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
   final Value<double> unitPrice;
   final Value<int> quantity;
   final Value<String> type;
-  final Value<bool> isDeleted;
   const TransactionItemCompanion({
     this.id = const Value.absent(),
     this.transactionId = const Value.absent(),
@@ -2055,7 +1820,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
     this.unitPrice = const Value.absent(),
     this.quantity = const Value.absent(),
     this.type = const Value.absent(),
-    this.isDeleted = const Value.absent(),
   });
   TransactionItemCompanion.insert({
     this.id = const Value.absent(),
@@ -2065,7 +1829,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
     required double unitPrice,
     required int quantity,
     required String type,
-    this.isDeleted = const Value.absent(),
   }) : transactionId = Value(transactionId),
        productName = Value(productName),
        unitPrice = Value(unitPrice),
@@ -2079,7 +1842,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
     Expression<double>? unitPrice,
     Expression<int>? quantity,
     Expression<String>? type,
-    Expression<bool>? isDeleted,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -2089,7 +1851,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
       if (unitPrice != null) 'unit_price': unitPrice,
       if (quantity != null) 'quantity': quantity,
       if (type != null) 'type': type,
-      if (isDeleted != null) 'is_deleted': isDeleted,
     });
   }
 
@@ -2101,7 +1862,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
     Value<double>? unitPrice,
     Value<int>? quantity,
     Value<String>? type,
-    Value<bool>? isDeleted,
   }) {
     return TransactionItemCompanion(
       id: id ?? this.id,
@@ -2111,7 +1871,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
       unitPrice: unitPrice ?? this.unitPrice,
       quantity: quantity ?? this.quantity,
       type: type ?? this.type,
-      isDeleted: isDeleted ?? this.isDeleted,
     );
   }
 
@@ -2139,9 +1898,6 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
-    if (isDeleted.present) {
-      map['is_deleted'] = Variable<bool>(isDeleted.value);
-    }
     return map;
   }
 
@@ -2154,8 +1910,7 @@ class TransactionItemCompanion extends UpdateCompanion<TransactionItemData> {
           ..write('productName: $productName, ')
           ..write('unitPrice: $unitPrice, ')
           ..write('quantity: $quantity, ')
-          ..write('type: $type, ')
-          ..write('isDeleted: $isDeleted')
+          ..write('type: $type')
           ..write(')'))
         .toString();
   }
@@ -2873,7 +2628,6 @@ typedef $$ProductTableCreateCompanionBuilder =
       required String productName,
       required double unitPrice,
       required String transactionType,
-      Value<bool> isDeleted,
     });
 typedef $$ProductTableUpdateCompanionBuilder =
     ProductCompanion Function({
@@ -2881,7 +2635,6 @@ typedef $$ProductTableUpdateCompanionBuilder =
       Value<String> productName,
       Value<double> unitPrice,
       Value<String> transactionType,
-      Value<bool> isDeleted,
     });
 
 final class $$ProductTableReferences
@@ -2971,11 +2724,6 @@ class $$ProductTableFilterComposer
 
   ColumnFilters<String> get transactionType => $composableBuilder(
     column: $table.transactionType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3083,11 +2831,6 @@ class $$ProductTableOrderingComposer
     column: $table.transactionType,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$ProductTableAnnotationComposer
@@ -3114,9 +2857,6 @@ class $$ProductTableAnnotationComposer
     column: $table.transactionType,
     builder: (column) => column,
   );
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   Expression<T> inventoryRefs<T extends Object>(
     Expression<T> Function($$InventoryTableAnnotationComposer a) f,
@@ -3230,13 +2970,11 @@ class $$ProductTableTableManager
                 Value<String> productName = const Value.absent(),
                 Value<double> unitPrice = const Value.absent(),
                 Value<String> transactionType = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => ProductCompanion(
                 id: id,
                 productName: productName,
                 unitPrice: unitPrice,
                 transactionType: transactionType,
-                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -3244,13 +2982,11 @@ class $$ProductTableTableManager
                 required String productName,
                 required double unitPrice,
                 required String transactionType,
-                Value<bool> isDeleted = const Value.absent(),
               }) => ProductCompanion.insert(
                 id: id,
                 productName: productName,
                 unitPrice: unitPrice,
                 transactionType: transactionType,
-                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3372,7 +3108,6 @@ typedef $$CustomerTableCreateCompanionBuilder =
       required String customerPhoneNumber,
       Value<String?> customerAddress,
       Value<double> currentBalance,
-      Value<bool> isDeleted,
     });
 typedef $$CustomerTableUpdateCompanionBuilder =
     CustomerCompanion Function({
@@ -3381,7 +3116,6 @@ typedef $$CustomerTableUpdateCompanionBuilder =
       Value<String> customerPhoneNumber,
       Value<String?> customerAddress,
       Value<double> currentBalance,
-      Value<bool> isDeleted,
     });
 
 final class $$CustomerTableReferences
@@ -3462,11 +3196,6 @@ class $$CustomerTableFilterComposer
 
   ColumnFilters<double> get currentBalance => $composableBuilder(
     column: $table.currentBalance,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3554,11 +3283,6 @@ class $$CustomerTableOrderingComposer
     column: $table.currentBalance,
     builder: (column) => ColumnOrderings(column),
   );
-
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
 }
 
 class $$CustomerTableAnnotationComposer
@@ -3592,9 +3316,6 @@ class $$CustomerTableAnnotationComposer
     column: $table.currentBalance,
     builder: (column) => column,
   );
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   Expression<T> transactionMasterRefs<T extends Object>(
     Expression<T> Function($$TransactionMasterTableAnnotationComposer a) f,
@@ -3684,14 +3405,12 @@ class $$CustomerTableTableManager
                 Value<String> customerPhoneNumber = const Value.absent(),
                 Value<String?> customerAddress = const Value.absent(),
                 Value<double> currentBalance = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => CustomerCompanion(
                 id: id,
                 customerName: customerName,
                 customerPhoneNumber: customerPhoneNumber,
                 customerAddress: customerAddress,
                 currentBalance: currentBalance,
-                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -3700,14 +3419,12 @@ class $$CustomerTableTableManager
                 required String customerPhoneNumber,
                 Value<String?> customerAddress = const Value.absent(),
                 Value<double> currentBalance = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => CustomerCompanion.insert(
                 id: id,
                 customerName: customerName,
                 customerPhoneNumber: customerPhoneNumber,
                 customerAddress: customerAddress,
                 currentBalance: currentBalance,
-                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -3803,7 +3520,6 @@ typedef $$InventoryTableCreateCompanionBuilder =
       Value<double?> customPrice,
       required int quantity,
       required String tranctionType,
-      Value<bool> isDeleted,
     });
 typedef $$InventoryTableUpdateCompanionBuilder =
     InventoryCompanion Function({
@@ -3813,7 +3529,6 @@ typedef $$InventoryTableUpdateCompanionBuilder =
       Value<double?> customPrice,
       Value<int> quantity,
       Value<String> tranctionType,
-      Value<bool> isDeleted,
     });
 
 final class $$InventoryTableReferences
@@ -3869,11 +3584,6 @@ class $$InventoryTableFilterComposer
 
   ColumnFilters<String> get tranctionType => $composableBuilder(
     column: $table.tranctionType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3935,11 +3645,6 @@ class $$InventoryTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$ProductTableOrderingComposer get productId {
     final $$ProductTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -3993,9 +3698,6 @@ class $$InventoryTableAnnotationComposer
     column: $table.tranctionType,
     builder: (column) => column,
   );
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   $$ProductTableAnnotationComposer get productId {
     final $$ProductTableAnnotationComposer composer = $composerBuilder(
@@ -4055,7 +3757,6 @@ class $$InventoryTableTableManager
                 Value<double?> customPrice = const Value.absent(),
                 Value<int> quantity = const Value.absent(),
                 Value<String> tranctionType = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => InventoryCompanion(
                 id: id,
                 productId: productId,
@@ -4063,7 +3764,6 @@ class $$InventoryTableTableManager
                 customPrice: customPrice,
                 quantity: quantity,
                 tranctionType: tranctionType,
-                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -4073,7 +3773,6 @@ class $$InventoryTableTableManager
                 Value<double?> customPrice = const Value.absent(),
                 required int quantity,
                 required String tranctionType,
-                Value<bool> isDeleted = const Value.absent(),
               }) => InventoryCompanion.insert(
                 id: id,
                 productId: productId,
@@ -4081,7 +3780,6 @@ class $$InventoryTableTableManager
                 customPrice: customPrice,
                 quantity: quantity,
                 tranctionType: tranctionType,
-                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4156,7 +3854,6 @@ typedef $$TransactionMasterTableCreateCompanionBuilder =
       required int customerId,
       required double totalAmount,
       Value<DateTime> createdAt,
-      Value<bool> isDeleted,
     });
 typedef $$TransactionMasterTableUpdateCompanionBuilder =
     TransactionMasterCompanion Function({
@@ -4164,7 +3861,6 @@ typedef $$TransactionMasterTableUpdateCompanionBuilder =
       Value<int> customerId,
       Value<double> totalAmount,
       Value<DateTime> createdAt,
-      Value<bool> isDeleted,
     });
 
 final class $$TransactionMasterTableReferences
@@ -4242,11 +3938,6 @@ class $$TransactionMasterTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnFilters(column),
-  );
-
   $$CustomerTableFilterComposer get customerId {
     final $$CustomerTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -4320,11 +4011,6 @@ class $$TransactionMasterTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$CustomerTableOrderingComposer get customerId {
     final $$CustomerTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4368,9 +4054,6 @@ class $$TransactionMasterTableAnnotationComposer
 
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   $$CustomerTableAnnotationComposer get customerId {
     final $$CustomerTableAnnotationComposer composer = $composerBuilder(
@@ -4458,13 +4141,11 @@ class $$TransactionMasterTableTableManager
                 Value<int> customerId = const Value.absent(),
                 Value<double> totalAmount = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => TransactionMasterCompanion(
                 id: id,
                 customerId: customerId,
                 totalAmount: totalAmount,
                 createdAt: createdAt,
-                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -4472,13 +4153,11 @@ class $$TransactionMasterTableTableManager
                 required int customerId,
                 required double totalAmount,
                 Value<DateTime> createdAt = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => TransactionMasterCompanion.insert(
                 id: id,
                 customerId: customerId,
                 totalAmount: totalAmount,
                 createdAt: createdAt,
-                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
@@ -4583,7 +4262,6 @@ typedef $$TransactionItemTableCreateCompanionBuilder =
       required double unitPrice,
       required int quantity,
       required String type,
-      Value<bool> isDeleted,
     });
 typedef $$TransactionItemTableUpdateCompanionBuilder =
     TransactionItemCompanion Function({
@@ -4594,7 +4272,6 @@ typedef $$TransactionItemTableUpdateCompanionBuilder =
       Value<double> unitPrice,
       Value<int> quantity,
       Value<String> type,
-      Value<bool> isDeleted,
     });
 
 final class $$TransactionItemTableReferences
@@ -4680,11 +4357,6 @@ class $$TransactionItemTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnFilters(column),
-  );
-
   $$TransactionMasterTableFilterComposer get transactionId {
     final $$TransactionMasterTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -4766,11 +4438,6 @@ class $$TransactionItemTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get isDeleted => $composableBuilder(
-    column: $table.isDeleted,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   $$TransactionMasterTableOrderingComposer get transactionId {
     final $$TransactionMasterTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -4843,9 +4510,6 @@ class $$TransactionItemTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
-
-  GeneratedColumn<bool> get isDeleted =>
-      $composableBuilder(column: $table.isDeleted, builder: (column) => column);
 
   $$TransactionMasterTableAnnotationComposer get transactionId {
     final $$TransactionMasterTableAnnotationComposer composer =
@@ -4932,7 +4596,6 @@ class $$TransactionItemTableTableManager
                 Value<double> unitPrice = const Value.absent(),
                 Value<int> quantity = const Value.absent(),
                 Value<String> type = const Value.absent(),
-                Value<bool> isDeleted = const Value.absent(),
               }) => TransactionItemCompanion(
                 id: id,
                 transactionId: transactionId,
@@ -4941,7 +4604,6 @@ class $$TransactionItemTableTableManager
                 unitPrice: unitPrice,
                 quantity: quantity,
                 type: type,
-                isDeleted: isDeleted,
               ),
           createCompanionCallback:
               ({
@@ -4952,7 +4614,6 @@ class $$TransactionItemTableTableManager
                 required double unitPrice,
                 required int quantity,
                 required String type,
-                Value<bool> isDeleted = const Value.absent(),
               }) => TransactionItemCompanion.insert(
                 id: id,
                 transactionId: transactionId,
@@ -4961,7 +4622,6 @@ class $$TransactionItemTableTableManager
                 unitPrice: unitPrice,
                 quantity: quantity,
                 type: type,
-                isDeleted: isDeleted,
               ),
           withReferenceMapper: (p0) => p0
               .map(
