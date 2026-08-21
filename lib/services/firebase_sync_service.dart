@@ -17,6 +17,14 @@ class FirebaseSyncService {
     }, SetOptions(merge: true));
   }
 
+  // Delete a customer from Firestore
+  Future<void> deleteCustomerFromCloud(int customerId) async {
+    await _firestore
+        .collection('customers')
+        .doc(customerId.toString())
+        .delete();
+  }
+
   // Sync a single transaction
   Future<void> syncTransaction(TransactionMasterData tx) async {
     await _firestore.collection('transactions').doc(tx.id.toString()).set({
@@ -26,6 +34,14 @@ class FirebaseSyncService {
       'createdAt': tx.createdAt.toIso8601String(),
       'syncedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
+  }
+
+  // Delete a transaction from Firestore
+  Future<void> deleteTransactionFromCloud(int transactionId) async {
+    await _firestore
+        .collection('transactions')
+        .doc(transactionId.toString())
+        .delete();
   }
 
   // Sync a single transaction item
@@ -54,6 +70,11 @@ class FirebaseSyncService {
     }, SetOptions(merge: true));
   }
 
+  // Delete a product from Firestore
+  Future<void> deleteProductFromCloud(int productId) async {
+    await _firestore.collection('products').doc(productId.toString()).delete();
+  }
+
   // Sync a single inventory item
   Future<void> syncInventory(InventoryData inventory) async {
     await _firestore.collection('inventory').doc(inventory.id.toString()).set({
@@ -64,6 +85,14 @@ class FirebaseSyncService {
       'quantity': inventory.quantity,
       'transactionType': inventory.tranctionType,
     }, SetOptions(merge: true));
+  }
+
+  // Delete an inventory item from Firestore
+  Future<void> deleteInventoryFromCloud(int inventoryId) async {
+    await _firestore
+        .collection('inventory')
+        .doc(inventoryId.toString())
+        .delete();
   }
 
   // Sync all local tables to Firestore concurrently

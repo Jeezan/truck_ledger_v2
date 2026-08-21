@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_text_styles.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/services/firebase_sync_service.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class EditCustomerPage extends StatefulWidget {
@@ -62,14 +63,17 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
             onPressed: () {
               CustomWidgets().onDeleteIconPress(
                 context: context,
-                title: 'Archive Customer',
+                title: 'Delete Customer Permanently',
                 content:
-                    'Are you sure you want to archive customer \'${widget.customerData.customerName}\'?',
-                confirmText: 'Archive',
-                confirmColor: AppColors.secondaryColor,
-                onPressed: () {
-                  // NOTE: Ensure softDeleteCustomer is implemented in app_database.dart
-                  database.deleteCustomer(widget.customerData.id);
+                    'Are you sure you want to permanently delete customer \'${widget.customerData.customerName}\'? This action cannot be undone.',
+                confirmText: 'Delete',
+                confirmColor: Colors.red,
+                onPressed: () async {
+                  await appDatabase.deleteCustomer(widget.customerData.id);
+
+                  FirebaseSyncService().deleteCustomerFromCloud(
+                    widget.customerData.id,
+                  );
 
                   Navigator.pop(context);
                   Navigator.pop(context);
@@ -77,15 +81,15 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
 
                   CustomWidgets().customSnackBar(
                     context,
-                    'Customer \'${widget.customerData.customerName}\' archived',
-                    AppColors.secondaryColor,
+                    'Customer \'${widget.customerData.customerName}\' deleted permanently',
+                    Colors.red,
                   );
                 },
               );
             },
             icon: const Icon(
-              Icons.archive_outlined, // Changed from delete_forever
-              color: AppColors.secondaryColor,
+              Icons.delete_forever,
+              color: Colors.red,
             ),
           ),
         ],

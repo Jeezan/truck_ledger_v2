@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/services/firebase_sync_service.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class EditProductPage extends StatefulWidget {
@@ -57,7 +58,7 @@ class _EditProductPageState extends State<EditProductPage> {
               _onDeleteIconPress(context);
             },
             icon: const Icon(
-              Icons.archive_outlined,
+              Icons.delete_forever_sharp,
               color: AppColors.secondaryColor,
             ),
           ),
@@ -233,12 +234,10 @@ class _EditProductPageState extends State<EditProductPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Archive Product'),
-
+        title: const Text('Delete Product Permanently'),
         content: Text(
-          'Are you sure you want to archive ${widget.product.productName}?',
+          'Are you sure you want to permanently delete ${widget.product.productName}?',
         ),
-
         actions: [
           TextButton(
             onPressed: () {
@@ -247,21 +246,22 @@ class _EditProductPageState extends State<EditProductPage> {
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              await appDatabase.deleteProduct(widget.product.id);
+
+              FirebaseSyncService().deleteProductFromCloud(widget.product.id);
+
               widget.onDelete();
               Navigator.pop(context);
               Navigator.pop(context);
 
               CustomWidgets().customSnackBar(
                 context,
-                '${widget.product.productName} archived',
-                Colors.orange.shade400,
+                '${widget.product.productName} permanently deleted',
+                Colors.red,
               );
             },
-            child: const Text(
-              'Archive',
-              style: TextStyle(color: Colors.orange),
-            ),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),

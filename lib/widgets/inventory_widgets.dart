@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:truck_ledger_v2/constants/app_colors.dart';
 import 'package:truck_ledger_v2/constants/app_enums.dart';
 import 'package:truck_ledger_v2/database/app_database.dart';
+import 'package:truck_ledger_v2/services/firebase_sync_service.dart';
 import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class InventoryWidgets {
@@ -276,8 +277,6 @@ class InventoryWidgets {
     required int qty,
     required VoidCallback onEdit,
   }) {
-    final totalValue = price * qty;
-
     return Dismissible(
       key: key,
       direction: DismissDirection.endToStart,
@@ -286,12 +285,10 @@ class InventoryWidgets {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Archive Inventory Item'),
-
+              title: const Text('Delete Inventory Item'),
               content: Text(
-                'Are you sure you want to archive \'$name\' from inventory?',
+                'Are you sure you want to permanently delete \'$name\' from inventory?',
               ),
-
               actions: [
                 TextButton(
                   onPressed: () {
@@ -299,14 +296,13 @@ class InventoryWidgets {
                   },
                   child: const Text('Cancel'),
                 ),
-
                 TextButton(
                   onPressed: () {
                     Navigator.pop(context, true);
                   },
                   child: const Text(
-                    'Archive',
-                    style: TextStyle(color: AppColors.secondaryColor),
+                    'Delete',
+                    style: TextStyle(color: Colors.red),
                   ),
                 ),
               ],
@@ -315,13 +311,15 @@ class InventoryWidgets {
         );
       },
       onDismissed: (direction) async {
-        await database.deleteInventory(inventoryId);
+        await appDatabase.deleteInventory(inventoryId);
+
+        FirebaseSyncService().deleteInventoryFromCloud(inventoryId);
 
         if (context.mounted) {
           CustomWidgets().customSnackBar(
             context,
-            'Item \'$name\' archived',
-            AppColors.secondaryColor,
+            'Item \'$name\' permanently deleted',
+            Colors.red,
           );
         }
       },
@@ -330,25 +328,23 @@ class InventoryWidgets {
         padding: const EdgeInsets.only(right: 20),
         margin: const EdgeInsets.symmetric(vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.dismissibleWidgetColor,
+          color: Colors.red,
           borderRadius: BorderRadius.circular(12),
         ),
-
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
-              'Archive Inventory',
+              'Delete Permanently',
               style: TextStyle(
-                color: AppColors.whiteColor,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
-
             SizedBox(width: 10),
             Icon(
-              Icons.archive_outlined,
+              Icons.delete_forever,
               color: Colors.white,
               size: 28,
             ),
@@ -356,25 +352,11 @@ class InventoryWidgets {
         ),
       ),
       child: Card(
-        elevation: 2,
-        margin: const EdgeInsets.symmetric(vertical: 6),
         child: ListTile(
-          title: Text(
-            name,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-          ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Price: LKR ${price.toStringAsFixed(2)} | Qty: $qty'),
-              Text(
-                'Total: LKR ${totalValue.toStringAsFixed(2)}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
+          title: Text(name),
+          subtitle: Text('Qty: $qty | Price: \$$price'),
           trailing: IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Colors.green),
+            icon: const Icon(Icons.edit),
             onPressed: onEdit,
           ),
         ),
