@@ -318,87 +318,94 @@ class CustomerWidgets {
                       return isCredit ? sum + itemTotal : sum - itemTotal;
                     });
 
-                    return Column(
-                      children: [
-                        Expanded(
-                          child: ListView.separated(
-                            itemCount: items.length,
-                            separatorBuilder: (_, _) =>
-                                const Divider(height: 1),
-                            itemBuilder: (context, index) {
-                              final item = items[index];
+                    return SafeArea(
+                      maintainBottomViewPadding: true,
+                      child: Column(
+                        children: [
+                          Expanded(
+                            child: ListView.separated(
+                              itemCount: items.length,
+                              separatorBuilder: (_, _) =>
+                                  const Divider(height: 1),
+                              itemBuilder: (context, index) {
+                                final item = items[index];
 
-                              final isCredit =
-                                  item.type == TransactionType.purchase.value ||
-                                  item.type == PaymentType.cashIn.value;
+                                final isCredit =
+                                    item.type ==
+                                        TransactionType.purchase.value ||
+                                    item.type == PaymentType.cashIn.value;
 
-                              final itemTotal = item.quantity * item.unitPrice;
+                                final itemTotal =
+                                    item.quantity * item.unitPrice;
 
-                              return ListTile(
-                                dense: true,
-                                contentPadding: EdgeInsets.zero,
-                                leading: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: isCredit
-                                      ? Colors.green.shade50
-                                      : Colors.red.shade50,
-                                  child: Icon(
-                                    isCredit
-                                        ? Icons.arrow_downward
-                                        : Icons.arrow_upward,
-                                    color: isCredit ? Colors.green : Colors.red,
-                                    size: 18,
+                                return ListTile(
+                                  dense: true,
+                                  contentPadding: EdgeInsets.zero,
+                                  leading: CircleAvatar(
+                                    radius: 16,
+                                    backgroundColor: isCredit
+                                        ? Colors.green.shade50
+                                        : Colors.red.shade50,
+                                    child: Icon(
+                                      isCredit
+                                          ? Icons.arrow_downward
+                                          : Icons.arrow_upward,
+                                      color: isCredit
+                                          ? Colors.green
+                                          : Colors.red,
+                                      size: 18,
+                                    ),
                                   ),
-                                ),
-                                title: Text(
-                                  item.productName,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
+                                  title: Text(
+                                    item.productName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                subtitle: Text(
-                                  '${item.quantity} x LKR ${_currencyFormat.format(item.unitPrice)}',
-                                ),
-                                trailing: Text(
-                                  '${isCredit ? '+' : '-'} LKR ${_currencyFormat.format(itemTotal)}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color: isCredit
-                                        ? Colors.green.shade700
-                                        : Colors.red.shade700,
+                                  subtitle: Text(
+                                    '${item.quantity} x LKR ${_currencyFormat.format(item.unitPrice)}',
                                   ),
-                                ),
-                              );
-                            },
+                                  trailing: Text(
+                                    '${isCredit ? '+' : '-'} LKR ${_currencyFormat.format(itemTotal)}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: isCredit
+                                          ? Colors.green.shade700
+                                          : Colors.red.shade700,
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
-                        ),
 
-                        const Divider(height: 20, thickness: 1.5),
+                          const Divider(height: 20, thickness: 1.5),
 
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Net Total:',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text(
+                                'Net Total:',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            Text(
-                              'LKR ${_currencyFormat.format(totalTransactionAmount.abs())}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: totalTransactionAmount >= 0
-                                    ? Colors.green.shade700
-                                    : Colors.red.shade700,
+                              Text(
+                                'LKR ${_currencyFormat.format(totalTransactionAmount.abs())}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: totalTransactionAmount >= 0
+                                      ? Colors.green.shade700
+                                      : Colors.red.shade700,
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),

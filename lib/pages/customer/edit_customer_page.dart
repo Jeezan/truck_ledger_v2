@@ -69,6 +69,7 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                   database.deleteCustomer(widget.customerData.id);
                   Navigator.pop(context);
                   Navigator.pop(context);
+                  Navigator.pop(context);
 
                   CustomWidgets().customSnackBar(
                     context,

@@ -72,10 +72,10 @@ class CustomerDetailsPage extends StatelessWidget {
                   await database.deleteTransactionMaster(transactionId);
 
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Transaction deleted successfully'),
-                      ),
+                    CustomWidgets().customSnackBar(
+                      context,
+                      'Transaction deleted successfully',
+                      Colors.red,
                     );
                   }
                 }

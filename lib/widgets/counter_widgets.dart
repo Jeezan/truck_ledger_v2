@@ -1143,12 +1143,9 @@ class CounterWidgets {
                   );
                 }
 
-                // 2. Trigger background sync silently to cloud
                 try {
-                  // Make sure you import FirebaseSyncService at the top of this file!
-                  FirebaseSyncService().pushAllData(database);
+                  FirebaseSyncService().syncAllData(database);
                 } catch (e) {
-                  // Fails silently, it will retry on the next app open/close
                   debugPrint('Silent transaction sync failed: $e');
                 }
               },

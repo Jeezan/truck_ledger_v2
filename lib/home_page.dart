@@ -61,9 +61,9 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
     try {
       final syncService = FirebaseSyncService();
       if (pushOnly) {
-        await syncService.pushAllData(appDatabase);
+        await syncService.syncAllData(appDatabase);
       } else {
-        await syncService.pushAllData(appDatabase);
+        await syncService.syncAllData(appDatabase);
         await syncService.pullAllData(appDatabase);
       }
       debugPrint('Background sync successful');
