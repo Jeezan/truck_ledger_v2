@@ -286,10 +286,10 @@ class InventoryWidgets {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Delete Inventory Item'),
+              title: const Text('Archive Inventory Item'),
 
               content: Text(
-                'Are you sure you want to remove \'$name\' from inventory?',
+                'Are you sure you want to archive \'$name\' from inventory?',
               ),
 
               actions: [
@@ -305,7 +305,7 @@ class InventoryWidgets {
                     Navigator.pop(context, true);
                   },
                   child: const Text(
-                    'Delete',
+                    'Archive',
                     style: TextStyle(color: AppColors.secondaryColor),
                   ),
                 ),
@@ -320,7 +320,7 @@ class InventoryWidgets {
         if (context.mounted) {
           CustomWidgets().customSnackBar(
             context,
-            'Item \'$name\' removed from List',
+            'Item \'$name\' archived',
             AppColors.secondaryColor,
           );
         }
@@ -338,7 +338,7 @@ class InventoryWidgets {
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
             Text(
-              'Delete Inventory',
+              'Archive Inventory',
               style: TextStyle(
                 color: AppColors.whiteColor,
                 fontWeight: FontWeight.bold,
@@ -348,7 +348,7 @@ class InventoryWidgets {
 
             SizedBox(width: 10),
             Icon(
-              Icons.delete_forever_sharp,
+              Icons.archive_outlined,
               color: Colors.white,
               size: 28,
             ),

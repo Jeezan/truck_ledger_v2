@@ -10,6 +10,7 @@ class Product extends Table {
   TextColumn get productName => text().withLength(max: 40)();
   RealColumn get unitPrice => real()();
   TextColumn get transactionType => text()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class Customer extends Table {
@@ -18,6 +19,7 @@ class Customer extends Table {
   TextColumn get customerPhoneNumber => text().withLength(min: 10, max: 15)();
   TextColumn get customerAddress => text().nullable()();
   RealColumn get currentBalance => real().withDefault(const Constant(0.0))();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class Inventory extends Table {
@@ -27,6 +29,7 @@ class Inventory extends Table {
   RealColumn get customPrice => real().nullable()();
   IntColumn get quantity => integer()();
   TextColumn get tranctionType => text()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class TransactionMaster extends Table {
@@ -34,6 +37,7 @@ class TransactionMaster extends Table {
   IntColumn get customerId => integer().references(Customer, #id)();
   RealColumn get totalAmount => real()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class TransactionItem extends Table {
@@ -50,6 +54,7 @@ class TransactionItem extends Table {
   RealColumn get unitPrice => real()();
   IntColumn get quantity => integer()();
   TextColumn get type => text()();
+  BoolColumn get isDeleted => boolean().withDefault(const Constant(false))();
 }
 
 class CustomerLedger extends Table {
@@ -80,7 +85,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(driftDatabase(name: 'ledger_database_II'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   //  >>>>>>>>>>>>>>> Products Database Logics <<<<<<<<<<<<<<<<<<
 
@@ -99,7 +104,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> deleteProduct(int id) {
-    return (delete(product)..where((p) => p.id.equals(id))).go();
+    return (update(product)..where((p) => p.id.equals(id))).write(
+      const ProductCompanion(isDeleted: Value(true)),
+    );
   }
 
   Future<bool> updateProduct(ProductData item) {
@@ -107,7 +114,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<ProductData>> watchAllProducts() {
-    return select(product).watch();
+    return (select(product)..where((p) => p.isDeleted.equals(false))).watch();
   }
 
   //  >>>>>>>>>>>>>>> End Of Products Database Logics <<<<<<<<<<<<<<<<<<
@@ -124,23 +131,24 @@ class AppDatabase extends _$AppDatabase {
         customerName: customerName,
         customerPhoneNumber: customerPhoneNumber,
         customerAddress: Value(customerAddress),
-        // currentBalance: Value(currentBalance ?? 0.0),
       ),
     );
   }
 
   Future<CustomerData?> getCustomerById(int id) {
-    return (select(customer)..where((c) => c.id.equals(id))).getSingle();
+    return (select(customer)
+          ..where((c) => c.id.equals(id) & c.isDeleted.equals(false)))
+        .getSingleOrNull();
   }
 
   Stream<List<CustomerData>> watchAllCustomers() {
-    return select(customer).watch();
+    return (select(customer)..where((c) => c.isDeleted.equals(false))).watch();
   }
 
   Stream<CustomerData?> watchCustomer(int id) {
-    return (select(
-      customer,
-    )..where((c) => c.id.equals(id))).watchSingleOrNull();
+    return (select(customer)
+          ..where((c) => c.id.equals(id) & c.isDeleted.equals(false)))
+        .watchSingleOrNull();
   }
 
   Future<bool> updateCustomerInfo(CustomerData updatedCustomer) {
@@ -148,7 +156,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<int> deleteCustomer(int id) {
-    return (delete(customer)..where((c) => c.id.equals(id))).go();
+    return (update(customer)..where((c) => c.id.equals(id))).write(
+      const CustomerCompanion(isDeleted: Value(true)),
+    );
   }
 
   //  >>>>>>>>>>>>>>> End Of Customer Database Logics <<<<<<<<<<<<<<<<<<
@@ -185,13 +195,13 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Stream<List<InventoryData>> watchAllInventory() {
-    return select(inventory).watch();
+    return (select(inventory)..where((i) => i.isDeleted.equals(false))).watch();
   }
 
   Stream<List<InventoryItemWithProduct>> watchInventoryWithProducts() {
-    final query = select(
-      inventory,
-    ).join([leftOuterJoin(product, product.id.equalsExp(inventory.productId))]);
+    final query = select(inventory).join([
+      leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
+    ])..where(inventory.isDeleted.equals(false));
 
     return query.watch().map(
       (rows) {
@@ -231,19 +241,23 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<InventoryData?> getInventoryByProductId(int productId) {
-    return (select(
-      inventory,
-    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
+    return (select(inventory)..where(
+          (i) => i.productId.equals(productId) & i.isDeleted.equals(false),
+        ))
+        .getSingleOrNull();
   }
 
   Future<int> deleteInventory(int id) {
-    return (delete(inventory)..where((i) => i.id.equals(id))).go();
+    return (update(inventory)..where((i) => i.id.equals(id))).write(
+      const InventoryCompanion(isDeleted: Value(true)),
+    );
   }
 
   Future<InventoryData?> findInventoryByProductId(int productId) {
-    return (select(
-      inventory,
-    )..where((i) => i.productId.equals(productId))).getSingleOrNull();
+    return (select(inventory)..where(
+          (i) => i.productId.equals(productId) & i.isDeleted.equals(false),
+        ))
+        .getSingleOrNull();
   }
 
   Future<InventoryData?> findInventoryByCustomNamePrice(
@@ -254,7 +268,8 @@ class AppDatabase extends _$AppDatabase {
           ..where(
             (i) =>
                 i.customName.lower().equals(customName.toLowerCase()) &
-                i.customPrice.equals(customPrice),
+                i.customPrice.equals(customPrice) &
+                i.isDeleted.equals(false),
           )
           ..limit(1))
         .getSingleOrNull();
@@ -263,9 +278,13 @@ class AppDatabase extends _$AppDatabase {
   Stream<List<InventoryItemWithProduct>> watchInventoryWithProductsByType(
     String type,
   ) {
-    final query = select(inventory).join([
-      leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
-    ])..where(inventory.tranctionType.equals(type));
+    final query =
+        select(inventory).join([
+          leftOuterJoin(product, product.id.equalsExp(inventory.productId)),
+        ])..where(
+          inventory.tranctionType.equals(type) &
+              inventory.isDeleted.equals(false),
+        );
 
     return query.watch().map(
       (rows) {
@@ -299,15 +318,17 @@ class AppDatabase extends _$AppDatabase {
     required int customerId,
   }) {
     return (select(transactionMaster)
-          ..where((t) => t.customerId.equals(customerId))
+          ..where(
+            (t) => t.customerId.equals(customerId) & t.isDeleted.equals(false),
+          )
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
         .watch();
   }
 
   Future<TransactionMasterData?> getTransaction(int id) {
-    return (select(
-      transactionMaster,
-    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    return (select(transactionMaster)
+          ..where((t) => t.id.equals(id) & t.isDeleted.equals(false)))
+        .getSingleOrNull();
   }
 
   Future<void> deleteTransactionMaster(int transactionId) async {
@@ -332,24 +353,26 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
-      // 3. Delete associated line items
-      await (delete(
-        transactionItem,
-      )..where((i) => i.transactionId.equals(transactionId))).go();
+      // 3. Soft delete associated line items
+      await (update(transactionItem)
+            ..where((i) => i.transactionId.equals(transactionId)))
+          .write(const TransactionItemCompanion(isDeleted: Value(true)));
 
-      // 4. Delete transaction master
-      await (delete(
-        transactionMaster,
-      )..where((t) => t.id.equals(transactionId))).go();
+      // 4. Soft delete transaction master
+      await (update(transactionMaster)
+            ..where((t) => t.id.equals(transactionId)))
+          .write(const TransactionMasterCompanion(isDeleted: Value(true)));
     });
   }
   //  >>>>>>>>>>>>>>> End Of Transaction Master Database Logics <<<<<<<<<<<<<<<<<<
   //  >>>>>>>>>>>>>>> Transaction Items Logics <<<<<<<<<<<<<<<<<<
 
   Stream<List<TransactionItemData>> watchTransactionItems(int transactionId) {
-    return (select(
-      transactionItem,
-    )..where((t) => t.transactionId.equals(transactionId))).watch();
+    return (select(transactionItem)..where(
+          (t) =>
+              t.transactionId.equals(transactionId) & t.isDeleted.equals(false),
+        ))
+        .watch();
   }
   //  >>>>>>>>>>>>>>> End Of Transaction Items Logics <<<<<<<<<<<<<<<<<<
   //  >>>>>>>>>>>>>>> Checkout Logic <<<<<<<<<<<<<<<<<<
@@ -361,7 +384,6 @@ class AppDatabase extends _$AppDatabase {
   }) async {
     await transaction(() async {
       // 1. Create Transaction Master
-
       final masterId = await into(transactionMaster).insert(
         TransactionMasterCompanion.insert(
           customerId: customerId,

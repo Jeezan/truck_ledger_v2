@@ -62,25 +62,29 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
             onPressed: () {
               CustomWidgets().onDeleteIconPress(
                 context: context,
-                title: 'Delete Customer',
+                title: 'Archive Customer',
                 content:
-                    'Are you sure you want to delete customer \'${widget.customerData.customerName}\' permanantly?',
+                    'Are you sure you want to archive customer \'${widget.customerData.customerName}\'?',
+                confirmText: 'Archive',
+                confirmColor: AppColors.secondaryColor,
                 onPressed: () {
+                  // NOTE: Ensure softDeleteCustomer is implemented in app_database.dart
                   database.deleteCustomer(widget.customerData.id);
+
                   Navigator.pop(context);
                   Navigator.pop(context);
                   Navigator.pop(context);
 
                   CustomWidgets().customSnackBar(
                     context,
-                    'Customer \'${widget.customerData.customerName}\' removed from List',
+                    'Customer \'${widget.customerData.customerName}\' archived',
                     AppColors.secondaryColor,
                   );
                 },
               );
             },
             icon: const Icon(
-              Icons.delete_forever_sharp,
+              Icons.archive_outlined, // Changed from delete_forever
               color: AppColors.secondaryColor,
             ),
           ),
@@ -185,6 +189,7 @@ class _EditCustomerPageState extends State<EditCustomerPage> {
                           customerPhoneNumber: newPhone,
                           customerAddress: newAddress,
                           currentBalance: widget.customerData.currentBalance,
+                          isDeleted: false,
                         ),
                       );
                       final changes = <String>[];

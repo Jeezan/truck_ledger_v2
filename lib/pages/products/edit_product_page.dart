@@ -57,7 +57,7 @@ class _EditProductPageState extends State<EditProductPage> {
               _onDeleteIconPress(context);
             },
             icon: const Icon(
-              Icons.delete_forever_sharp,
+              Icons.archive_outlined,
               color: AppColors.secondaryColor,
             ),
           ),
@@ -179,6 +179,7 @@ class _EditProductPageState extends State<EditProductPage> {
                           productName: newName,
                           unitPrice: newPrice,
                           transactionType: newType,
+                          isDeleted: false,
                         ),
                       );
 
@@ -232,10 +233,10 @@ class _EditProductPageState extends State<EditProductPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Product'),
+        title: const Text('Archive Product'),
 
         content: Text(
-          'Are you sure you want to delete ${widget.product.productName}?',
+          'Are you sure you want to archive ${widget.product.productName}?',
         ),
 
         actions: [
@@ -253,11 +254,14 @@ class _EditProductPageState extends State<EditProductPage> {
 
               CustomWidgets().customSnackBar(
                 context,
-                '${widget.product.productName} removed from List',
-                Colors.red.shade400,
+                '${widget.product.productName} archived',
+                Colors.orange.shade400,
               );
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text(
+              'Archive',
+              style: TextStyle(color: Colors.orange),
+            ),
           ),
         ],
       ),

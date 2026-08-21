@@ -125,15 +125,15 @@ class CustomWidgets {
     required BuildContext context,
     required String title,
     required String content,
+    String confirmText = 'Archive',
+    Color confirmColor = Colors.orange,
     required VoidCallback onPressed,
   }) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(title),
-        content: Text(
-          content,
-        ),
+        content: Text(content),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -141,8 +141,7 @@ class CustomWidgets {
           ),
           TextButton(
             onPressed: onPressed,
-
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(confirmText, style: TextStyle(color: confirmColor)),
           ),
         ],
       ),

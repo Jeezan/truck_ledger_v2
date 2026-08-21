@@ -24,10 +24,8 @@ class _MenuPageState extends State<MenuPage> {
     try {
       final syncService = FirebaseSyncService();
 
-      // 1. Upload local Drift changes to Firestore
-      await syncService.pushAllData(appDatabase);
+      await syncService.syncAllData(appDatabase);
 
-      // 2. Download the latest Firestore changes into local Drift
       await syncService.pullAllData(appDatabase);
 
       if (mounted) {

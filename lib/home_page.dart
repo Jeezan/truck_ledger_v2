@@ -38,7 +38,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // Clean up the observer when the app is destroyed
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
