@@ -13,7 +13,7 @@ class FirebaseSyncService {
       'customerPhoneNumber': customer.customerPhoneNumber,
       'customerAddress': customer.customerAddress,
       'currentBalance': customer.currentBalance,
-      'updatedAt': FieldValue.serverTimestamp(),
+      'syncedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -57,6 +57,7 @@ class FirebaseSyncService {
           'unitPrice': transactionItem.unitPrice,
           'quantity': transactionItem.quantity,
           'type': transactionItem.type,
+          'syncedAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
   }
 
@@ -74,6 +75,7 @@ class FirebaseSyncService {
       'productName': product.productName,
       'unitPrice': product.unitPrice,
       'transactionType': product.transactionType,
+      'syncedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -91,6 +93,7 @@ class FirebaseSyncService {
       'customPrice': inventory.customPrice,
       'quantity': inventory.quantity,
       'transactionType': inventory.tranctionType,
+      'syncedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
 
@@ -113,12 +116,13 @@ class FirebaseSyncService {
           'transactionType': customerLedger.transactionType,
           'quantity': customerLedger.quantity,
           'unitPrice': customerLedger.unitPrice,
-          'creditAmount': customerLedger.createdAt,
+          'creditAmount': customerLedger.creditAmount,
           'debitAmount': customerLedger.debitAmount,
           'paymentAmount': customerLedger.paymentAmount,
           'balance': customerLedger.balance,
-          'createdAt': customerLedger.createdAt,
-        });
+          'createdAt': customerLedger.createdAt.toIso8601String(),
+          'syncedAt': FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
   }
 
   // Sync all local tables to Firestore concurrently
@@ -148,6 +152,7 @@ class FirebaseSyncService {
 
   // Pull remote data from Firestore into Drift
   Future<void> pullAllData(AppDatabase db) async {
+    // 1. Pull Customers
     final customerSnap = await _firestore.collection('customers').get();
     for (var doc in customerSnap.docs) {
       final data = doc.data();
@@ -164,6 +169,45 @@ class FirebaseSyncService {
           );
     }
 
+    // 2. Pull Products
+    final productSnap = await _firestore.collection('products').get();
+    for (var doc in productSnap.docs) {
+      final data = doc.data();
+      await db
+          .into(db.product)
+          .insertOnConflictUpdate(
+            ProductCompanion(
+              id: Value(data['id']),
+              productName: Value(data['productName'] ?? ''),
+              unitPrice: Value((data['unitPrice'] ?? 0.0).toDouble()),
+              transactionType: Value(data['transactionType'] ?? ''),
+            ),
+          );
+    }
+
+    // 3. Pull Inventory
+    final inventorySnap = await _firestore.collection('inventory').get();
+    for (var doc in inventorySnap.docs) {
+      final data = doc.data();
+      await db
+          .into(db.inventory)
+          .insertOnConflictUpdate(
+            InventoryCompanion(
+              id: Value(data['id']),
+              productId: Value(data['productId']),
+              customName: Value(data['customName']),
+              customPrice: Value(
+                data['customPrice'] != null
+                    ? (data['customPrice'] as num).toDouble()
+                    : null,
+              ),
+              quantity: Value(data['quantity'] ?? 0),
+              tranctionType: Value(data['transactionType'] ?? ''),
+            ),
+          );
+    }
+
+    // 4. Pull Transactions
     final txSnap = await _firestore.collection('transactions').get();
     for (var doc in txSnap.docs) {
       final data = doc.data();
@@ -179,6 +223,25 @@ class FirebaseSyncService {
                     ? DateTime.parse(data['createdAt'])
                     : DateTime.now(),
               ),
+            ),
+          );
+    }
+
+    // 5. Pull Transaction Items
+    final txItemSnap = await _firestore.collection('transactionItems').get();
+    for (var doc in txItemSnap.docs) {
+      final data = doc.data();
+      await db
+          .into(db.transactionItem)
+          .insertOnConflictUpdate(
+            TransactionItemCompanion(
+              id: Value(data['id']),
+              transactionId: Value(data['transactionId']),
+              productId: Value(data['productId']),
+              productName: Value(data['productName'] ?? ''),
+              unitPrice: Value((data['unitPrice'] ?? 0.0).toDouble()),
+              quantity: Value(data['quantity'] ?? 0),
+              type: Value(data['type'] ?? ''),
             ),
           );
     }
