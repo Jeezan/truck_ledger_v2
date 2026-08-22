@@ -8,6 +8,7 @@ import 'package:truck_ledger_v2/widgets/custom_widgets.dart';
 
 class InventoryWidgets {
   final database = appDatabase;
+  final NumberFormat _currencyFormat = NumberFormat('#,##0.00', 'en_US');
 
   void onFloatingButtonPressed({
     required BuildContext context,
@@ -271,12 +272,17 @@ class InventoryWidgets {
   Widget customInventoryCard({
     required BuildContext context,
     required Key key,
+    required int? productId,
     required int inventoryId,
     required String name,
     required double price,
     required int qty,
     required VoidCallback onEdit,
   }) {
+    final double itemTotalValue = price * qty;
+    final formattedTotalValue = _currencyFormat.format(
+      itemTotalValue,
+    );
     return Dismissible(
       key: key,
       direction: DismissDirection.endToStart,
@@ -353,10 +359,39 @@ class InventoryWidgets {
       ),
       child: Card(
         child: ListTile(
-          title: Text(name),
-          subtitle: Text('Qty: $qty | Price: \$$price'),
+          title: Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+          subtitle: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Price: LKR.$price | Qty: $qty',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: productId == null
+                      ? Colors.orange.shade800
+                      : Colors.grey.shade700,
+                ),
+              ),
+
+              Text(
+                'LKR. $formattedTotalValue',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
           trailing: IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(
+              Icons.edit,
+              color: AppColors.primaryColor,
+            ),
             onPressed: onEdit,
           ),
         ),

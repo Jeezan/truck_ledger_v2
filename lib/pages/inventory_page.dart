@@ -92,6 +92,7 @@ class _InventoryPageState extends State<InventoryPage> {
                           currentQty: item.inventory.quantity,
                         );
                       },
+                      productId: item.inventory.productId,
                     );
                   },
                 ),
